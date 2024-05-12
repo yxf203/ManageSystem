@@ -1,6 +1,6 @@
 <template>
     <div class="check-bill">
-        <div class="title">审核销售单</div>
+        <ContentHeader content="查看销售单"></ContentHeader>
         <div class="filter">
             <!-- 搜索框 -->
             <el-form
@@ -115,6 +115,7 @@
     import { ElMessage, ElMessageBox, dayjs } from 'element-plus'
     import { useBillListStore } from '../../../stores/billList';
     import { digitUppercase } from "pixiu-number-toolkit";
+    import ContentHeader from "@/components/ContentHeader.vue";
     // 当前页数
     const currentPage = ref(1);
     // 搜索

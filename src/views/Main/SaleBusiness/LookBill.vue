@@ -112,7 +112,7 @@
                     />
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" @click="onSubmit">查询</el-button>
+                    <el-button type="primary" @click="getBillList()">查询</el-button>
                 </el-form-item>
             </el-form>
         </div>
@@ -133,6 +133,7 @@
             <el-table-column prop="cust" label="收货人" align="center"/>
             <el-table-column prop="phone" label="收货人电话" max-width="180" align="center"/>
             <el-table-column prop="address" label="收货地址" max-width="180" align="center"/>
+            <el-table-column prop="kindName" label="类型" max-width="180" align="center"/>
             <el-table-column prop="store" label="所属仓库" max-width="180" align="center"/>
             <el-table-column label="订单状态" max-width="150" align="center">
                 <template #default="scope">
@@ -146,7 +147,7 @@
                         v-if="scope.row.state === 1"
                         size="small" 
                         type="primary"
-                        @click="handleSumbit(scope.$index)">
+                        @click="handleSumbit(scope.$index, scope.row)">
                         提交
                     </el-button>
                     <el-button 
@@ -159,8 +160,30 @@
                     <el-button
                         size="small"
                         type="danger"
+                        v-if="scope.row.state != 4 && scope.row.state != 5"
                         @click="handleDelete(scope.$index, scope.row)">
                         删除
+                    </el-button>
+                    <el-button 
+                        size="small" 
+                        type="primary"
+                        v-if="scope.row.state === 3 || scope.row.state === 4"
+                        @click="handleEdit(scope.$index, scope.row)">
+                        查看
+                    </el-button>
+                    <el-button 
+                        size="small" 
+                        type="warning"
+                        v-if="scope.row.state === 3"
+                        @click="handlePay(scope.$index, scope.row)">
+                        付款
+                    </el-button>
+                    <el-button 
+                        size="small" 
+                        type="danger"
+                        v-if="scope.row.state === 4"
+                        @click="handleRefund(scope.$index, scope.row)">
+                        退货
                     </el-button>
                 </template>
             </el-table-column>
@@ -181,13 +204,13 @@
         <!-- 新建/编辑订单内容 -->
         <el-dialog v-model="editGoodsDialogVisible" :title="dialogContent" width="1000px" :close-on-click-modal="false" >
             <el-table :data="billData.billDetail" style="width: 100%" max-height="500">
-                <el-table-column fixed prop="id" label="货品编号" width="100"  align="center" />
+                <el-table-column fixed prop="goodId" label="货品编号" width="100"  align="center" />
                 <el-table-column prop="name" label="货品名称" width="120"  align="center"/>
                 <el-table-column prop="decri" label="包装规格" width="120"  align="center"/>
                 <el-table-column prop="number" label="数量" width="120" align="center" />
                 <el-table-column prop="singlePrice" label="单价" width="120" align="center" />
                 <el-table-column prop="total" label="金额" width="120" :formatter="totalFormatter" align="center" />
-                <el-table-column prop="extra" label="备注" width="120" align="center" />
+                <el-table-column prop="notes" label="备注" width="120" align="center" />
                 <el-table-column fixed="right" label="操作" width="120" align="center">
                 <template #default="scope">
                     <el-button link type="warning" size="small" @click="handleDeleteGoods(scope.$index)">删除</el-button>
@@ -273,7 +296,7 @@
             >
                 <el-form-item label="货品编号">
                     <el-select 
-                    v-model="goodsForm.id" 
+                    v-model="goodsForm.goodId" 
                     class="m-2" 
                     placeholder="Select"
                     clearable
@@ -326,7 +349,7 @@
                     <el-input disabled :value="goodsForm.singlePrice"></el-input>
                 </el-form-item>
                 <el-form-item label="备注">
-                    <el-input v-model="goodsForm.extra"></el-input>
+                    <el-input v-model="goodsForm.notes"></el-input>
                 </el-form-item>
                 <el-form-item>
                     <el-button type="primary" @click="onSubmit">{{ goodsFlag === 0? '新增': '保存' }}</el-button>
@@ -359,13 +382,13 @@
                     </tr>
                     <tr v-for="(item, index) in billData.billDetail">
                         <th>{{ index + 1 }}</th>
-                        <th>{{ item.id }}</th>
+                        <th>{{ item.goodId }}</th>
                         <th>{{ item.name }}</th>
                         <th>{{ item.decri }}</th>
                         <th>{{ item.number }}</th>
                         <th>{{ item.singlePrice }}</th>
                         <th>{{ item.total.toFixed(2) }}</th>
-                        <th>{{ item.extra }}</th>
+                        <th>{{ item.notes }}</th>
                     </tr>
                     <tr>
                         <th :colspan="6" style="text-align: left;padding-left: 7px;">总金额（大写）：{{ charTotal }}</th>
@@ -389,7 +412,7 @@
     import ContentHeader from '../../../components/ContentHeader.vue';
     import baseAxios from '../../../api/baseAxios.js';
     import moment from 'moment';
-    import Bill from '@/components/Bill.vue';
+import { number } from 'echarts';
     // 批量删除框部分
     const dialogBatchVisible = ref(false)
     // 确认删除框部分
@@ -405,7 +428,7 @@
     const dateFormatter = (row) => {
         const updateTime = row.updateTime;
         const date = moment(updateTime);
-        return date.format("YYYY-MM-DD HH:mm:ss");
+        return date.format("YYYY-MM-DD");
     }
     const totalFormatter = (row) => {
         console.log(typeof row.total);
@@ -428,12 +451,12 @@
         // 新增订单可见
     const addGoodsVis = ref(false);
     const goodsForm = ref({
-        id: '',
+        goodId: '',
         name: '',
         decri: '',
         number: '',
         singlePrice: '',
-        extra: '',
+        notes: '',
     });
     // 订单信息
     // 查找信息
@@ -477,6 +500,10 @@
             value: 2,
         },
     ]
+    const kindMap = {
+        1: "批发单",
+        2: "零售单"
+    }
     const custMap = {};
     const custOptions = ref([]);
     const custDetail = {};
@@ -504,6 +531,26 @@
         })
     }
     getcustList();
+    const goodsDetail = {};
+    function getAllGoodsList(){
+        baseAxios({
+            url: '/goods/all',
+            method: 'get',
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.code){
+                let temp_data = res.data.data;
+                temp_data.forEach(x => {
+                    goodsDetail[x.id] = x;
+                })
+            } else {
+                ElMessage.error(res.data.msg);
+            }
+        }).catch(err => {
+            console.log(err.message);
+        })
+    }
+    getAllGoodsList();
     const goodsList = ref([]);
     const idOptions = ref([]);
     const goodsOptions = ref(null);
@@ -566,7 +613,7 @@
     getStoreList();
     let decriOptions = ref([]);
     // 实现缺省设计
-    watch(() => goodsForm.value.id, (id) => {
+    watch(() => goodsForm.value.goodId, (id) => {
         if(id != ''){
             let temp = goodsList.value.filter(x => x.id === id);
             goodsForm.value.name = temp[0].name;
@@ -582,7 +629,7 @@
     watch(() => goodsForm.value.name, (name) => {
         if(name === ''){
             decriOptions.value = [];
-            goodsForm.value.id = '';
+            goodsForm.value.goodId = '';
         } else {
             let temp = goodsList.value.filter(x => x.name === name);
             decriOptions.value = temp.map(x => ({value: x.decri, label: x.decri}));
@@ -591,7 +638,7 @@
     watch(() => goodsForm.value.decri, (decri) => {
         if(decri !== ''){
             let temp = goodsList.value.filter(x => x.name === goodsForm.value.name && x.decri === decri);
-            goodsForm.value.id = temp[0].id;
+            goodsForm.value.goodId = temp[0].id;
         }
     })
     // 增加新增订单按钮
@@ -604,7 +651,7 @@
             }
         }
         if(flag){
-            if(goodsForm.value.id === '') ElMessage.error("订单信息不可为空");
+            if(goodsForm.value.goodId === '') ElMessage.error("订单信息不可为空");
             else {
                 if(!goodsForm.value.number) ElMessage.error("数量不能为空");
                 else if(parseInt(goodsForm.value.number) === 0) ElMessage.error("数量不能为0");
@@ -662,6 +709,7 @@
                 x.phone = custDetail[x.custId].phone;
                 x.address = custDetail[x.custId].address;
                 x.store = storeMap[x.storeId];
+                x.kindName = kindMap[x.kind];
             });
             total.value = res.data.data.total;
         }).catch(err => {
@@ -671,6 +719,7 @@
     getBillList();
     // 订单信息
     const billData = ref({
+        id: null,
         kind: null,
         storeId: null,
         custId: null,
@@ -697,8 +746,26 @@
         getGoodsList();
         
     }
+    function changeState(id, state, tip){
+        baseAxios({
+            url: '/slips',
+            method: 'put',
+            data: {
+                id: id,
+                state: state
+            }
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.code){
+                ElMessage.success(tip);
+                getBillList();
+            } else {
+                ElMessage.error(res.data.msg);
+            }
+        })
+    }
     // 处理订单的提交
-    const handleSumbit = (index) => {
+    const handleSumbit = (index, row) => {
         ElMessageBox.confirm( 
             '确认要提交吗？提交后将不能再修改',
             '提交订单',
@@ -707,20 +774,56 @@
                 cancelButtonText: '取消',
                 type: 'warning',
         }).then(() => {
-            // baseaxios
-            getBillList();
-            ElMessage.success("提交成功");
+            changeState(row.id, 2, "提交成功！");
+        })
+    }
+    const handlePay = (index, row) => {
+        changeState(row.id, 4, "付款成功！");
+    }
+    const handleRefund = (index, row) => {
+        ElMessageBox.confirm(
+            '确认要退货吗？',
+            '退货',
+            {
+                confirmButtonText: '确认',
+                cancelButtonText: '取消',
+                type: 'warning',
+            }
+        ).then(() => {
+            temp_id.value = row.id;
+            confirmDelete(0, '退货成功！退款将在24小时内返回您的账户！');
         })
     }
     // 处理订单的编辑
     const handleEdit = (index, row) => {
         console.log(index, row)
         baseAxios({
-            url: "/slips/" + row.id,
+            url: "/slipDetails",
             method: 'get',
+            params: {
+                slipId: row.id,
+            }
         }).then(res => {
+            console.log("编辑订单");
             console.log(res.data);
-            form.value = res.data.data;
+            billData.value = row;
+            billData.value.billDetail = [];
+            res.data.data.forEach(x => {
+                let goodDetail = goodsDetail[x.goodId];
+                let temp = {
+                    ...x,
+                    ...goodDetail
+                }
+                temp.id = x.id;
+                if(row.kind === 1) temp.singlePrice = goodDetail.pfPri;
+                else if(row.kind === 2) temp.singlePrice = goodDetail.lsPri;
+                temp.total = Number(x.number) * Number(temp.singlePrice);
+                billData.value.billDetail.push(temp);
+            });
+            console.log("billData");
+            console.log(billData.value);
+            getGoodsList();
+            // form.value = res.data.data;
         }).catch(err => {
             console.log(err.message);
         })
@@ -759,12 +862,13 @@
     const handleSelectionChange = (val) => {
         multipleSelection.value = val;
     }
+    const temp_id = ref(null);
     const handleDelete = (index, row) => {
         console.log(index, row)
         temp_id.value = row.id;
         dialogVisible.value = true;
     }
-    function confirmDelete(type){
+    function confirmDelete(type, tip="删除成功！"){
         // type为0说明是单个，为1说明是多个。
         let ids = "";
         if(type){
@@ -783,10 +887,10 @@
             console.log(res.data);
             if(res.data.code){
                 ElMessage({
-                    message: '删除成功！',
+                    message: tip,
                     type: 'success',
                 })
-                getGoodsList();
+                getBillList();
                 dialogVisible.value = false;
                 dialogBatchVisible.value = false;
             }
@@ -821,22 +925,68 @@
     const onChangeItem = () => {
         if(billData.value.custId === '' || billData.value.custId === null) ElMessage.error("收货人不可为空");
         else {
-            let obj = {
-                consigneeName: billData.value.consigneeName,
-                phone: billData.value.phone,
-                address: billData.value.address,
+            let method = '';
+            if(dialogContent.value == "新增订单"){
+                method = 'post';
+            } else if(dialogContent.value == "编辑订单"){
+                method = 'put';
+            }
+            let data = {
+                kind: billData.value.kind,
                 state: 1,
-                billDetail: billData.value.billDetail,
+                storeId: billData.value.storeId,
+                custId: billData.value.custId,
             }
-            if(dialogContent == "新增订单"){
-                ElMessage.success("创建成功");
-                editGoodsDialogVisible.value = false;
-            } else {
-                ElMessage.success("保存成功");
-                editGoodsDialogVisible.value = false;
-            }
-            getBillList();
-            pageSizeChange();
+            if(method == 'put') data['id'] = billData.value.id;
+            baseAxios({
+                url: "/slips",
+                method: method,
+                data: data
+            }).then(res => {
+                console.log(res.data);
+                let slipId;
+                let t_data = [];
+                if(method === 'post'){
+                    slipId = res.data.data;
+                    billData.value.billDetail.forEach(x => {
+                        t_data.push({
+                            "slipId": slipId,
+                            "goodId": x.goodId,
+                            "number": x.number,
+                            "notes": x.notes
+                        })
+                    });
+                } else if(method === 'put'){
+                    billData.value.billDetail.forEach(x => {
+                        t_data.push({
+                            "id": x.id,
+                            "goodId": x.goodId,
+                            "number": x.number,
+                            "notes": x.notes
+                        })
+                    });
+                }
+                baseAxios({
+                    url: '/slipDetails',
+                    method: method,
+                    data: t_data
+                }).then(res => {
+                    if(res.data.code){
+                        editGoodsDialogVisible.value = false;
+                        ElMessage({
+                            message: '保存成功！',
+                            type: 'success',
+                        })
+                        getBillList();
+                    } else {
+                        ElMessage.error(res.data.msg);
+                    }
+                }).catch(err => {
+                    console.log(err.message);
+                })
+            }).catch(err => {
+                console.log(err.message);
+            })
         }
     }
     // 生成销售单预览
@@ -863,6 +1013,10 @@
 </script>
 
 <style lang="scss" scoped>
+.info-message {
+    font-size: 18px;
+    margin: 20px 20px 10px;
+}
 .look-bill {
     padding: 10px 0;
     box-sizing: border-box;
