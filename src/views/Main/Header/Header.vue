@@ -13,7 +13,7 @@
             <template #dropdown>
             <el-dropdown-menu>
                 <el-dropdown-item>个人资料</el-dropdown-item>
-                <el-dropdown-item>退出登录</el-dropdown-item>
+                <el-dropdown-item @click="loginOut">退出登录</el-dropdown-item>
             </el-dropdown-menu>
             </template>
         </el-dropdown>
@@ -22,7 +22,12 @@
 
 <script setup>
 import { ArrowDown,Avatar } from '@element-plus/icons-vue';
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
+function loginOut(){
+    localStorage.removeItem('token');
+    router.push("/");
+}
 </script>
 
 <style scoped>

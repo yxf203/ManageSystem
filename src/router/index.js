@@ -3,13 +3,18 @@ import LoginMain from '@/views/Login/LoginMain.vue';
 import LoginBox from '@/views/Login/LoginBox.vue'
 import RegisterBox from '@/views/Login/RegisterBox.vue'
 import MainPage from '@/views/Main/MainPage.vue'
-// 货品管理
-import ManageGoods from '@/views/Main/ManageGoods/ManageGoods.vue';
+// 仓库管理
+import ManageRepe from '@/views/Main/ManageRepe/ManageRepe.vue';
+// 业务伙伴管理
+import ManageCust from '@/views/Main/ManageCompanion/ManageCust.vue';
+import ManageSuppliers from '@/views/Main/ManageCompanion/ManageSuppliers.vue';
+// 用户管理
+import ManageUser from '@/views/Main/ManageUser/ManageUser.vue';
 // 销售业务
 import CheckBill from '@/views/Main/SaleBusiness/CheckBill.vue';
 import LookBill from '@/views/Main/SaleBusiness/LookBill.vue';
 import PassedBill from '@/views/Main/SaleBusiness/PassedBill.vue';
-// 仓库管理
+// 库存管理
 import Repertory from '@/views/Main/ManageStore/Repertory.vue';
 import RepertoryGraph from '@/views/Main/ManageStore/RepertoryGraph.vue';
 const routes = [
@@ -34,11 +39,27 @@ const routes = [
         path: '/main',
         component: MainPage,
         children: [
-            //管理货品
             {
-                path: 'manageGoods',
-                name: 'manageGoods',
-                component: ManageGoods,
+                path: 'manageRepe',
+                name: 'manageRepe',
+                component: ManageRepe,
+            },
+            //管理合作伙伴
+            {
+                path: 'manageCust',
+                name: 'manageCust',
+                component: ManageCust,
+            },
+            {
+                path: 'manageSuppliers',
+                name: 'manageSuppliers',
+                component: ManageSuppliers,
+            },
+            //用户管理
+            {
+                path: 'manageUser',
+                name: 'manageUser',
+                component: ManageUser,
             },
             // 销售业务
             {
@@ -56,7 +77,7 @@ const routes = [
                 name: 'passedBill',
                 component: PassedBill,
             },
-            // 仓库管理
+            // 库存管理
             {
                 path: 'repertory',
                 name: 'repertory',

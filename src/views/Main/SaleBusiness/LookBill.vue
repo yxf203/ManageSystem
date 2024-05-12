@@ -1,146 +1,286 @@
 <template>
+    <!-- 批量删除确认框 -->
+    <el-dialog
+        v-model="dialogBatchVisible"
+        width="500"
+    >
+        <ContentHeader content="批量删除订单"></ContentHeader>
+        <div class="info-message">您确定要批量删除这些订单的信息吗 ?</div>
+        <template #footer>
+        <div class="dialog-footer">
+            <el-button type="primary" @click="confirmDelete(1)">
+                确定
+            </el-button>
+            <el-button @click="dialogBatchVisible = false">取消</el-button>
+        </div>
+        </template>
+    </el-dialog>
+    <!-- 删除确认框 -->
+    <el-dialog
+        v-model="dialogVisible"
+        width="500"
+    >
+        <ContentHeader content="删除订单"></ContentHeader>
+        <div class="info-message">您确定要删除该订单的信息吗 ?</div>
+        <template #footer>
+        <div class="dialog-footer">
+            <el-button type="primary" @click="confirmDelete(0)">
+                确定
+            </el-button>
+            <el-button @click="dialogVisible = false">取消</el-button>
+
+        </div>
+        </template>
+    </el-dialog>
     <div class="look-bill">
-        <div class="title">查看销售单</div>
-        <div class="filter">
-            <!-- 搜索框 -->
-            <el-form
-                class="demo-form-inline"
-                :inline="true"
-                v-model="filterForm"
-            >
-                <el-form-item>
-                    <el-input v-model="filterForm.orderId" placeholder="订单编号" />
-                </el-form-item>
-                <el-form-item>
-                    <el-input v-model="filterForm.name" placeholder="收货人" />
-                </el-form-item>
-                <el-form-item>
-                    <el-select v-model="filterForm.orderStatus" clearable class="m-2" placeholder="订单状态" >
+        <ContentHeader content="查看销售单"></ContentHeader>
+        <div class="query">
+            <!-- 查询表单 -->
+            <el-form :inline="true" :model="formInline" class="demo-form-inline">
+                <el-form-item label="收货人">
+                    <el-select
+                    v-model="formInline.custId"
+                    filterable
+                    clearable
+                    placeholder="请选择"
+                    style="width: 150px;"
+                    >
                         <el-option
-                            v-for="item in ['未提交', '待审核', '已拒绝']"
-                            :key="item"
-                            :label="item"
-                            :value="item"
+                        v-for="item in custOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item>
+                <el-form-item label="类型">
+                    <el-select
+                    v-model="formInline.kind"
+                    filterable
+                    clearable
+                    placeholder="请选择"
+                    style="width: 150px;"
+                    >
+                        <el-option
+                        v-for="item in kindOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="所属仓库">
+                    <el-select
+                    v-model="formInline.storeId"
+                    filterable
+                    clearable
+                    placeholder="请选择"
+                    style="width: 150px;"
+                    >
+                        <el-option
+                        v-for="item in storeOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="状态">
+                    <el-select
+                    v-model="formInline.state"
+                    filterable
+                    clearable
+                    placeholder="请选择"
+                    style="width: 150px;"
+                    >
+                        <el-option
+                        v-for="item in stateOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="创建时间 从">
                     <el-date-picker
-                        v-model="filterForm.date"
+                        v-model="formInline.createTime"
+                        type="daterange"
+                        start-placeholder="开始时间"
+                        end-placeholder="结束时间"
+                        :default-value="[new Date(), new Date()]"
                         value-format="YYYY-MM-DD"
-                        type="date"
-                        placeholder="创建日期"
                     />
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" @click="handleSearch">搜索</el-button>
+                    <el-button type="primary" @click="onSubmit">查询</el-button>
                 </el-form-item>
             </el-form>
         </div>
         <div class="operate">
-            <el-button type="primary" @click="createBill">新增订单</el-button>
-            <el-button type="danger" @click="deleteGoods">删除订单</el-button>
+            <el-button type="primary" @click="createBill">+ 新增订单</el-button>
+            <el-button type="danger" @click="handleBatchDel">- 批量删除</el-button>
         </div>
         <!-- 内容表格 -->
         <el-table 
-            :data="currentPageData" 
-            fit
+            :data="tableData" 
+            :fit="true"
+            style="width: 100%;height: calc(100vh - 350px);"
+            @selection-change="handleSelectionChange"
         >
             <el-table-column type="selection" width="80" align="center" />
-            <el-table-column type="index" :index="indexMethod" width="80" label="序号" align="center"/>
-            <el-table-column prop="orderId" label="订单编号" max-width="180" align="center"/>
-            <el-table-column prop="consigneeName" label="收货人" align="center"/>
-            <el-table-column prop="telephone" label="收货人电话" max-width="180" align="center"/>
+            <!-- <el-table-column type="index" :index="indexMethod" width="80" label="序号" align="center"/> -->
+            <el-table-column prop="id" label="订单编号" max-width="100" align="center"/>
+            <el-table-column prop="cust" label="收货人" align="center"/>
+            <el-table-column prop="phone" label="收货人电话" max-width="180" align="center"/>
             <el-table-column prop="address" label="收货地址" max-width="180" align="center"/>
-            <el-table-column label="订单状态" max-width="180" align="center">
+            <el-table-column prop="store" label="所属仓库" max-width="180" align="center"/>
+            <el-table-column label="订单状态" max-width="150" align="center">
                 <template #default="scope">
-                    <p :class="[ currentPageData[scope.$index].orderStatus === '未提交'? 'stateColor1' : (currentPageData[scope.$index].orderStatus === '待审核'?'stateColor2': 'stateColor3') ]">{{ currentPageData[scope.$index].orderStatus }}</p>
+                    <p :class="scope.row.stateClass">{{ scope.row.stateName }}</p>
                 </template>
             </el-table-column>
-            <el-table-column prop="date" label="创建时间" max-width="180" align="center"/>
-            <el-table-column label="操作" min-width="90" align="center">
+            <el-table-column prop="createTime" label="创建时间" :formatter="dateFormatter" max-width="150" align="center"/>
+            <el-table-column label="操作" min-width="150" align="center">
                 <template #default="scope">
                     <el-button 
-                        v-if="scope.row.orderStatus === '未提交'"
+                        v-if="scope.row.state === 1"
                         size="small" 
                         type="primary"
                         @click="handleSumbit(scope.$index)">
                         提交
                     </el-button>
                     <el-button 
-                        v-if="scope.row.orderStatus === '未提交' || scope.row.orderStatus === '已拒绝'"
+                        v-if="scope.row.state === 1 || scope.row.state === 5"
                         size="small" 
                         type="warning"
                         @click="handleEdit(scope.$index, scope.row)">
-                        {{ scope.row.orderStatus === '未提交'? '编辑': '修改' }}
+                        {{ scope.row.state === 1? '编辑': '修改' }}
                     </el-button>
                     <el-button
                         size="small"
                         type="danger"
-                        @click="deleteGoods(scope.$index)">
+                        @click="handleDelete(scope.$index, scope.row)">
                         删除
                     </el-button>
                 </template>
             </el-table-column>
         </el-table>
-        <!-- 分页器 -->
-         <div class="pagination">
-            <el-pagination background layout="prev, pager, next" :total="filterTableData.length" v-model:current-page="currentPage" @current-change="pageSizeChange" />
-         </div>
+        <!-- 翻页器 -->
+        <div class="pagination">
+            <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="tota;, sizes, prev, pager, next, jumper"
+            :total="total"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            >
+            </el-pagination>
+        </div>
         <!-- 新建/编辑订单内容 -->
-        <el-dialog v-model="editGoodsDialogVisible" :title="billFlag === 0? '新建订单' :'编辑订单'" width="1000px" :close-on-click-modal="false" >
-            <el-table :data="billDetail" style="width: 100%" max-height="500">
-                <el-table-column fixed prop="goodsId" label="货品编号" width="150" />
-                <el-table-column prop="name" label="货品名称" width="120" />
-                <el-table-column prop="specification" label="包装规格" width="120" />
-                <el-table-column prop="amount" label="数量" width="120" />
-                <el-table-column prop="singlePrice" label="单价" width="120" />
-                <el-table-column prop="total" label="金额" width="120" />
-                <el-table-column prop="extra" label="备注" width="120" />
-                <el-table-column fixed="right" label="操作" width="120">
+        <el-dialog v-model="editGoodsDialogVisible" :title="dialogContent" width="1000px" :close-on-click-modal="false" >
+            <el-table :data="billData.billDetail" style="width: 100%" max-height="500">
+                <el-table-column fixed prop="id" label="货品编号" width="100"  align="center" />
+                <el-table-column prop="name" label="货品名称" width="120"  align="center"/>
+                <el-table-column prop="decri" label="包装规格" width="120"  align="center"/>
+                <el-table-column prop="number" label="数量" width="120" align="center" />
+                <el-table-column prop="singlePrice" label="单价" width="120" align="center" />
+                <el-table-column prop="total" label="金额" width="120" :formatter="totalFormatter" align="center" />
+                <el-table-column prop="extra" label="备注" width="120" align="center" />
+                <el-table-column fixed="right" label="操作" width="120" align="center">
                 <template #default="scope">
-                    <el-button link type="warning" size="small" @click="handleDelete(scope.$index)">删除</el-button>
+                    <el-button link type="warning" size="small" @click="handleDeleteGoods(scope.$index)">删除</el-button>
                     <el-button link type="primary" size="small" @click="editGoods(scope.$index)">编辑</el-button>
                 </template>
                 </el-table-column>
             </el-table>
-            <el-button class="mt-4" style="width: 100%" @click="onAddItem">新增货品</el-button>
-            <!-- 收货人信息 -->
+            <el-button class="mt-4" style="width: 100%" @click="onAddItem" :disabled="billData.storeId === null || billData.storeId === '' || billData.kind === null || billData.kind === ''">新增货品</el-button>
+            
+            <!-- 订单信息 -->
             <el-form class="billStyle">
-                <el-form-item label="收货人姓名:">
-                    <el-input v-model="consigneeName" />
+                <el-form-item label="订单类型">
+                    <el-select
+                    v-model="billData.kind"
+                    filterable
+                    clearable
+                    placeholder="请选择订单类型"
+                    style="width: 200px;"
+                    >
+                        <el-option
+                        v-for="item in kindOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="所属仓库">
+                    <el-select
+                    v-model="billData.storeId"
+                    filterable
+                    clearable
+                    @change="updateStore"
+                    placeholder="请选择所属仓库"
+                    style="width: 200px;"
+                    >
+                        <el-option
+                        v-for="item in storeOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="收货人">
+                    <el-select
+                    v-model="billData.custId"
+                    filterable
+                    clearable
+                    :disabled="billData.storeId === null || billData.storeId === ''"
+                    @change="updateDetail"
+                    placeholder="请选择"
+                    style="width: 200px;"
+                    >
+                        <el-option
+                        v-for="item in custOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                        />
+                    </el-select>
                 </el-form-item>
                 <el-form-item label="收货人电话:">
-                    <el-input v-model="telephone" />
+                    <el-input v-model="billData.phone" :disabled="true" />
                 </el-form-item>
                 <el-form-item label="收货地址:">
-                    <el-input v-model="address" />
+                    <el-input v-model="billData.address" :disabled="true"/>
                 </el-form-item>
             </el-form>
             <div class="billBtns">
                 <p @click="previewBill">生成销售单预览</p>
                 <div>
-                    <el-button class="mt-4" type="primary" @click="onChangeItem">{{billFlag === 0? '创建' :'保存'}}</el-button>
+                    <el-button class="mt-4" type="primary" @click="onChangeItem">{{dialogContent == "新增订单"? '创建' :'保存'}}</el-button>
                     <el-button class="mt-4" @click="editGoodsDialogVisible = false">取消</el-button>
                 </div>
             </div>
         </el-dialog>
         <!-- 增加/编辑货品 -->
-        <el-dialog v-model="addGoodsVis" :title="goodsFlag === 0? '新增货品': '编辑货品'" width="500px" :close-on-click-modal="false" >
+        <el-dialog v-model="addGoodsVis" :title="dialogContent" width="500px" :close-on-click-modal="false" >
             <el-form
                 label-width="100px"
                 style="max-width: 500px"
             >
                 <el-form-item label="货品编号">
                     <el-select 
-                    v-model="goodsForm.goodsId" 
+                    v-model="goodsForm.id" 
                     class="m-2" 
                     placeholder="Select"
                     clearable
                     filterable
                     >
                         <el-option
-                        v-for="item in goodsIdOptions"
+                        v-for="item in idOptions"
                         :key="item.value"
                         :label="item.label"
                         :value="item.value"
@@ -165,14 +305,14 @@
                 </el-form-item>
                 <el-form-item label="包装规格">
                     <el-select 
-                    v-model="goodsForm.specification" 
+                    v-model="goodsForm.decri" 
                     class="m-2" 
                     placeholder="Select"
                     clearable
                     filterable
                     >
                         <el-option
-                        v-for="item in specificationOptions"
+                        v-for="item in decriOptions"
                         :key="item.value"
                         :label="item.label"
                         :value="item.value"
@@ -180,7 +320,7 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item label="数量">
-                    <el-input v-model="goodsForm.amount"></el-input>
+                    <el-input v-model="goodsForm.number"></el-input>
                 </el-form-item>
                 <el-form-item label="单价">
                     <el-input disabled :value="goodsForm.singlePrice"></el-input>
@@ -195,15 +335,16 @@
             </el-form>
         </el-dialog>
         <!-- 销售单预览 -->
+            <!-- 销售单预览 -->
         <el-dialog v-model="previewBillVis" title="销售单预览" width="1100px">
             <div class="billPreview">
                 <h2>销售单</h2>
-                <p>单号：{{ billFlag === 0? billListStore.orderId : currentOrderId}}</p>
+                <p>单号：</p>
                 <table width="1000px" class="tableStyle">
                     <tr class="consigneeLine">
-                        <td :colspan="2">客户名称:{{ consigneeName }}</td>
-                        <td :colspan="2">联系方式:{{ telephone }}</td>
-                        <td :colspan="2">客户地址:{{ address }}</td>
+                        <td :colspan="2">客户名称:{{ billData.consigneeName }}</td>
+                        <td :colspan="2">联系方式:{{ billData.phone }}</td>
+                        <td :colspan="2">客户地址:{{ billData.address }}</td>
                         <td :colspan="2">日期: {{ dayjs().format('YYYY-MM-DD') }}</td>
                     </tr>
                     <tr>
@@ -216,12 +357,12 @@
                         <th>金额</th>
                         <th>备注</th>
                     </tr>
-                    <tr v-for="(item, index) in billDetail">
+                    <tr v-for="(item, index) in billData.billDetail">
                         <th>{{ index + 1 }}</th>
-                        <th>{{ item.goodsId }}</th>
+                        <th>{{ item.id }}</th>
                         <th>{{ item.name }}</th>
-                        <th>{{ item.specification }}</th>
-                        <th>{{ item.amount }}</th>
+                        <th>{{ item.decri }}</th>
+                        <th>{{ item.number }}</th>
                         <th>{{ item.singlePrice }}</th>
                         <th>{{ item.total.toFixed(2) }}</th>
                         <th>{{ item.extra }}</th>
@@ -244,107 +385,237 @@
 <script setup>
     import { ref, reactive, computed, watch } from 'vue'
     import { ElMessage, ElMessageBox, dayjs } from 'element-plus'
-    import { useBillListStore } from '../../../stores/billList';
-    import { useTableDataStore } from '../../../stores/tableData';
     import { digitUppercase } from "pixiu-number-toolkit";
-    let orderId = 1;
-    let currentOrderId = 0;
+    import ContentHeader from '../../../components/ContentHeader.vue';
+    import baseAxios from '../../../api/baseAxios.js';
+    import moment from 'moment';
+    import Bill from '@/components/Bill.vue';
+    // 批量删除框部分
+    const dialogBatchVisible = ref(false)
+    // 确认删除框部分
+    const dialogVisible = ref(false)
     // 当前页数
+    // 翻页器变量
     const currentPage = ref(1);
+    const pageSize = ref(10);
+    const total = ref(1);
+    // 弹出框部分
+    const dialogContent = ref("新增订单"); 
+    // 日期格式化显示
+    const dateFormatter = (row) => {
+        const updateTime = row.updateTime;
+        const date = moment(updateTime);
+        return date.format("YYYY-MM-DD HH:mm:ss");
+    }
+    const totalFormatter = (row) => {
+        console.log(typeof row.total);
+        return row.total.toFixed(2);
+    }
     // 新建编辑订单页面可见性
     const editGoodsDialogVisible = ref(false);
-    // const editGoodsForm = ref({})
-    const currentPageData = ref([])
-    // const value = ref("");
-    const filterForm = reactive({
-        orderId: '',
-        name: '',
-        orderStatus: '',
-        date: ''
+    const formInline = reactive({
+        kind: null,
+        state: null,
+        custId: null,
+        storeId: null,
+        createTime: [null, null],
     })
-    // 订单新建/编辑模式 0为新增 1为编辑
-    let billFlag = ref(0);
-    // 记录当前订单内货品编辑是什么模式，goodsFlag 为0时为新增，为1时为编辑
+
+    // 记录当前订单内订单编辑是什么模式，goodsFlag 为0时为新增，为1时为编辑
     let goodsFlag = ref(0);
     let goodsIndex = 0;
-    // 新增货品信息
-        // 新增货品可见
+    // 新增订单信息
+        // 新增订单可见
     const addGoodsVis = ref(false);
     const goodsForm = ref({
-        goodsId: '',
+        id: '',
         name: '',
-        specification: '',
-        amount: '',
+        decri: '',
+        number: '',
         singlePrice: '',
         extra: '',
     });
     // 订单信息
-    const billListStore = useBillListStore();
-    const billList = computed(() => billListStore.billList.filter(x => x.orderStatus !== '已通过'));
     // 查找信息
-    const filterTableData = ref([])
-    filterTableData.value = billList.value;
-    currentPageData.value = filterTableData.value.slice(0,10);
-    // 利用已有货品信息 获取选项列表
-    const goodsListStore = useTableDataStore();
-    const goodsList = computed(() => goodsListStore.tableData.filter(x => x.state === '已上架'));
-    const goodsIdOptions = goodsList.value.map(x => ({value:x.goodsId, label:x.goodsId}));
-    let goodsOptions = goodsList.value.map(x => x.name);
-    goodsOptions = goodsOptions.filter((item, index) => {
-        return goodsOptions.indexOf(item) === index;
-    })
-    goodsOptions = goodsOptions.map(x => ({value: x, label: x}));
-    let specificationOptions = ref([]);
+    // 常量部分
+    const stateOptions = [
+        {
+            label: "未提交",
+            value: 1,
+        },
+        {
+            label: "待审核",
+            value: 2,
+        },
+        {
+            label: "未付款",
+            value: 3,
+        },
+        {
+            label: "已付款",
+            value: 4,
+        },
+        {
+            label: "未通过",
+            value: 5
+        }
+    ];
+    const stateMap = {
+        1: "未提交",
+        2: "待审核",
+        3: "未付款",
+        4: "已付款",
+        5: "未通过",
+    }
+    const kindOptions = [
+        {
+            label: "批发单",
+            value: 1,
+        },
+        {
+            label: "零售单",
+            value: 2,
+        },
+    ]
+    const custMap = {};
+    const custOptions = ref([]);
+    const custDetail = {};
+    function getcustList(){
+        baseAxios({
+            url: '/custs/all',
+            method: 'get',
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.code){
+                let temp_data = res.data.data;
+                temp_data.forEach(x => {
+                    custOptions.value.push({
+                        label: x.name,
+                        value: x.id
+                    });
+                    custMap[x.id] = x.name;
+                    custDetail[x.id] = x;
+                })
+            } else {
+                ElMessage.error(res.data.msg);
+            }
+        }).catch(err => {
+            console.log(err.message);
+        })
+    }
+    getcustList();
+    const goodsList = ref([]);
+    const idOptions = ref([]);
+    const goodsOptions = ref(null);
+    function getGoodsList(){
+        baseAxios({
+            url: '/goods/list',
+            method: 'get',
+            params: {
+                storeId: billData.value.storeId
+            }
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.code){
+                idOptions.value = [];
+                goodsList.value = res.data.data;
+                let t_goodsOptions = goodsList.value.map(x => x.name);
+                t_goodsOptions = t_goodsOptions.filter((item, index) => {
+                    return t_goodsOptions.indexOf(item) === index;
+                })
+                t_goodsOptions = t_goodsOptions.map(x => ({value: x, label: x}));
+                goodsOptions.value = t_goodsOptions;
+                let temp_data = res.data.data;
+                temp_data.forEach(x => {
+                    idOptions.value.push({
+                        label: x.id,
+                        value: x.id
+                    });
+                })
+            } else {
+                ElMessage.error(res.data.msg);
+            }
+        }).catch(err => {
+            console.log(err.message);
+        })
+    }
+    const storeOptions = ref([]);
+    let storeMap = {};
+    function getStoreList(){
+        baseAxios({
+            url: '/stores/all',
+            method: 'get',
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.code){
+                let temp_data = res.data.data;
+                temp_data.forEach(x => {
+                    storeOptions.value.push({
+                        label: x.name,
+                        value: x.id
+                    });
+                    storeMap[x.id] = x.name;
+                })
+            } else {
+                ElMessage.error(res.data.msg);
+            }
+        }).catch(err => {
+            console.log(err.message);
+        })
+    }
+    getStoreList();
+    let decriOptions = ref([]);
     // 实现缺省设计
-    watch(() => goodsForm.value.goodsId, (goodsId) => {
-        if(goodsId != ''){
-            let temp = goodsList.value.filter(x => x.goodsId === goodsId);
+    watch(() => goodsForm.value.id, (id) => {
+        if(id != ''){
+            let temp = goodsList.value.filter(x => x.id === id);
             goodsForm.value.name = temp[0].name;
-            goodsForm.value.specification = temp[0].specification;
-            goodsForm.value.singlePrice = temp[0].price;
+            goodsForm.value.decri = temp[0].decri;
+            if(billData.value.kind === 1)goodsForm.value.singlePrice = temp[0].pfPri;
+            else if(billData.value.kind === 2) goodsForm.value.singlePrice = temp[0].lsPri;
         } else {
             goodsForm.value.name = '';
-            goodsForm.value.specification = '';
+            goodsForm.value.decri = '';
             goodsForm.value.singlePrice = '';
         }
     })
     watch(() => goodsForm.value.name, (name) => {
         if(name === ''){
-            specificationOptions.value = [];
-            goodsForm.value.goodsId = '';
+            decriOptions.value = [];
+            goodsForm.value.id = '';
         } else {
             let temp = goodsList.value.filter(x => x.name === name);
-            specificationOptions.value = temp.map(x => ({value: x.specification, label: x.specification}));
+            decriOptions.value = temp.map(x => ({value: x.decri, label: x.decri}));
         }
     })
-    watch(() => goodsForm.value.specification, (specification) => {
-        if(specification !== ''){
-            let temp = goodsList.value.filter(x => x.name === goodsForm.value.name && x.specification === specification);
-            goodsForm.value.goodsId = temp[0].goodsId;
+    watch(() => goodsForm.value.decri, (decri) => {
+        if(decri !== ''){
+            let temp = goodsList.value.filter(x => x.name === goodsForm.value.name && x.decri === decri);
+            goodsForm.value.id = temp[0].id;
         }
     })
-    // 增加新增货品按钮
+    // 增加新增订单按钮
     const onSubmit = () => {
         let flag = true;
-        for(let i = 0; i < goodsForm.value.amount.length; i++){
-            if(!(goodsForm.value.amount[i] >= '0' && goodsForm.value.amount[i] <= '9')){
+        for(let i = 0; i < goodsForm.value.number.length; i++){
+            if(!(goodsForm.value.number[i] >= '0' && goodsForm.value.number[i] <= '9')){
                 flag = false;
                 break;
             }
         }
         if(flag){
-            if(goodsForm.value.goodsId === '') ElMessage.error("货品信息不可为空");
+            if(goodsForm.value.id === '') ElMessage.error("订单信息不可为空");
             else {
-                if(!goodsForm.value.amount) ElMessage.error("数量不能为空");
-                else if(parseInt(goodsForm.value.amount) === 0) ElMessage.error("数量不能为0");
+                if(!goodsForm.value.number) ElMessage.error("数量不能为空");
+                else if(parseInt(goodsForm.value.number) === 0) ElMessage.error("数量不能为0");
                 else {
-                    goodsForm.value.amount = parseInt(goodsForm.value.amount)
-                    goodsForm.value.total = goodsForm.value.singlePrice * goodsForm.value.amount;
+                    goodsForm.value.number = parseInt(goodsForm.value.number)
+                    goodsForm.value.total = goodsForm.value.singlePrice * goodsForm.value.number;
                     let temp = Object.assign({}, goodsForm.value);
-                    if(goodsFlag.value === 0) billDetail.value.push(temp);
+                    if(goodsFlag.value === 0) billData.value.billDetail.push(temp);
                     else {
                         for(let key in goodsForm.value){
-                            billDetail.value[goodsIndex][key] = goodsForm.value[key];
+                            billData.value.billDetail[goodsIndex][key] = goodsForm.value[key];
                         }
                     }
                     addGoodsVis.value = false;
@@ -357,32 +628,74 @@
             ElMessage.error("输入的数量需要是整数格式");
         }
     }
-    // 取消添加货品
+    // 取消添加订单
     const onCancel = () => {
        addGoodsVis.value = false;
     }
-    // const tableData = [
-    //     {
-    //         name: '可乐',
-    //         specification: '500ml',
-    //         price: '3.5',
-    //         repertory: '99980',
-    //         type: "原味",
-    //         goodsId: '98562135451020',
-    //         orderId: '77542135451020',
-    //         date: '2023-10-20 18:08',
-    //         orderStatus: '待审核'
-    //     },
-    // ]
-
-    const billDetail = ref([]);
-    // 收货人信息
-    const consigneeName = ref('');
-    const telephone = ref('');
-    const address = ref('');
-    // 处理序号
-    const indexMethod = (index) => {
-        return (currentPage.value - 1) * 10 + index + 1;
+    // 获取所有订单信息
+    const tableData = ref([]);
+    function getBillList(){
+        if(formInline.createTime == null){
+            formInline.createTime = [null, null];
+        }
+        let params = {
+            page: currentPage.value,
+            pageSize: pageSize.value,
+            kind: formInline.kind,
+            state: formInline.state,
+            storeId: formInline.storeId,
+            custId: formInline.custId,
+            begin: formInline.createTime[0],
+            end: formInline.createTime[1],
+        }
+        console.log(params);
+        baseAxios({
+            url: '/slips',
+            method: 'get',
+            params
+        }).then(res => {
+            console.log(res.data);
+            tableData.value = res.data.data.rows;
+            tableData.value.forEach(x => {
+                x.stateName = stateMap[x.state];
+                x.cust = custDetail[x.custId].name;
+                x.phone = custDetail[x.custId].phone;
+                x.address = custDetail[x.custId].address;
+                x.store = storeMap[x.storeId];
+            });
+            total.value = res.data.data.total;
+        }).catch(err => {
+            console.log(err.message);
+        })
+    }
+    getBillList();
+    // 订单信息
+    const billData = ref({
+        kind: null,
+        storeId: null,
+        custId: null,
+        consigneeName: '',
+        phone: '',
+        address: '',
+        billDetail: [],
+    })
+    // 实时更新收货人信息
+    function updateDetail(){
+        if(billData.value.custId){
+            billData.value.consigneeName = custDetail[billData.value.custId].name;
+            billData.value.phone = custDetail[billData.value.custId].phone;
+            billData.value.address = custDetail[billData.value.custId].address;
+        } else {
+            billData.value.consigneeName = "";
+            billData.value.phone = "";
+            billData.value.address = "";
+        }
+    }
+    // 更新所属仓库
+    function updateStore(){
+        console.log(billData.value.storeId);
+        getGoodsList();
+        
     }
     // 处理订单的提交
     const handleSumbit = (index) => {
@@ -394,39 +707,39 @@
                 cancelButtonText: '取消',
                 type: 'warning',
         }).then(() => {
-            billListStore.changeState(currentPageData.value[index].orderId);
-            queryData();
-            pageSizeChange();
+            // baseaxios
+            getBillList();
             ElMessage.success("提交成功");
         })
     }
     // 处理订单的编辑
     const handleEdit = (index, row) => {
-        billFlag.value = 1;
-        currentOrderId = currentPageData.value[index].orderId;
-        billDetail.value = currentPageData.value[index].billDetail;
-        consigneeName.value = currentPageData.value[index].consigneeName;
-        telephone.value = currentPageData.value[index].telephone;
-        address.value = currentPageData.value[index].address;
-        // editGoodsForm.value = row
-        // editGoodsForm.value.index = index
-        editGoodsDialogVisible.value = true
-        // queryData();
-        // pageSizeChange();
+        console.log(index, row)
+        baseAxios({
+            url: "/slips/" + row.id,
+            method: 'get',
+        }).then(res => {
+            console.log(res.data);
+            form.value = res.data.data;
+        }).catch(err => {
+            console.log(err.message);
+        })
+        dialogContent.value = "编辑订单";
+        editGoodsDialogVisible.value = true;
     }
-    // 处理订单内货品的编辑
+    // 处理订单内订单的编辑
     const editGoods = (index) => {
-        // goodsForm.value = billDetail.value[index];
+        // goodsForm.value = billData.billDetail.value[index];
         for(let key in goodsForm.value){
-            goodsForm.value[key] = billDetail.value[index][key];
+            goodsForm.value[key] = billData.value.billDetail[index][key];
         }
         addGoodsVis.value = true;
         goodsFlag.value = 1;
         goodsIndex = index;
 
     }
-    // 处理订单内货品的删除
-    const handleDelete = (index) => {
+    // 处理订单内订单的删除
+    const handleDeleteGoods = (index) => {
         ElMessageBox.confirm(
             '确认要删除该订单？',
             '删除订单',
@@ -436,75 +749,67 @@
                 type: 'warning',
             }
         ).then(() => {
-            billDetail.value = billDetail.value.filter((x, i) => i !== index);
+            billData.value .billDetail= billData.value.billDetail.filter((x, i) => i !== index);
             // ElMessage.success("删除成功");
+        })
+    }
+    // 删除订单
+        // 处理多选 用于批量删除
+    const multipleSelection = ref([])
+    const handleSelectionChange = (val) => {
+        multipleSelection.value = val;
+    }
+    const handleDelete = (index, row) => {
+        console.log(index, row)
+        temp_id.value = row.id;
+        dialogVisible.value = true;
+    }
+    function confirmDelete(type){
+        // type为0说明是单个，为1说明是多个。
+        let ids = "";
+        if(type){
+            multipleSelection.value.forEach(x => {
+                console.log(x.id);
+                if(ids == "") ids = x.id;
+                else ids += "," + x.id;
+            })
+        }else{
+            ids = temp_id.value;
+        }
+        baseAxios({
+            url: "/slips/" + ids,
+            method: "delete",
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.code){
+                ElMessage({
+                    message: '删除成功！',
+                    type: 'success',
+                })
+                getGoodsList();
+                dialogVisible.value = false;
+                dialogBatchVisible.value = false;
+            }
         })
     }
     // 创建订单
     const createBill = () => {
-        billFlag.value = 0;
+        dialogContent.value = "新增订单";
         editGoodsDialogVisible.value = true;
-        billDetail.value = [];
-        consigneeName.value = '';
-        telephone.value = '';
-        address.value = '';
+        billData.value.billDetail = [];
+        billData.value.custId = null;
+        billData.value.storeId = null;
+        billData.value.kind = null;
+        billData.value.consigneeName = '';
+        billData.value.phone = '';
+        billData.value.address = '';
+    }
+    // 批量删除按钮
+    function handleBatchDel(){
+        dialogBatchVisible.value = true;
     }
 
-    const deleteGoods = (index) => {
-        ElMessageBox.confirm(
-            '确认要删除该订单？',
-            '删除订单',
-            {
-                confirmButtonText: '确认',
-                cancelButtonText: '取消',
-                type: 'warning',
-            }
-        ).then(() => {
-            if (index || !isNaN(index)) {
-                // filterTableData.value.splice(index, 1)
-                // currentPageData.value = filterTableData.value.slice(0, 10)
-                billListStore.deleteBill(currentPageData.value[index].orderId);
-                ElMessage({
-                    type: 'success',
-                    message: '删除成功',
-                })
-                queryData();
-                pageSizeChange();
-            }
-        }).catch(() => {
-            ElMessage({
-                type: 'info',
-                message: '删除失败',
-            })
-        })
-    }
-    // const confirmEditGoods = () => {
-    //     filterTableData.value.splice(editGoodsForm.value.index, 1, editGoodsForm.value)
-    //     editGoodsDialogVisible.value = false
-    // }
-    function pageSizeChange(){
-        currentPageData.value = filterTableData.value.slice((currentPage.value - 1) * 10, currentPage.value * 10)
-    }
-    const queryData = () => {
-        filterTableData.value = billList.value.filter(item => {
-            if (
-                item.orderId.includes(filterForm.orderId) &&
-                (item.consigneeName.includes(filterForm.name) || filterForm.name === '') &&
-                (item.orderStatus === filterForm.orderStatus || filterForm.orderStatus === '') &&
-                (item.date.includes(filterForm.date) || !filterForm.date)
-            ) {
-                return true;
-            }
-        })
-    }
-    const handleSearch = () => {
-        queryData();
-        currentPage.value = 1;
-        pageSizeChange();
-    }
-    // filterTableData.value = tableData.value;
-    // currentPageData.value = tableData.value.slice(0, 10)
-    // 点击增加货品按钮
+    // 点击增加订单按钮
     const onAddItem = () => {
         addGoodsVis.value = true;
         goodsFlag.value = 0;//置为新增
@@ -514,30 +819,23 @@
     }
     // 点击新增或者保存订单
     const onChangeItem = () => {
-        if(consigneeName.value === '') ElMessage.error("收货人姓名不可为空");
-        else if (telephone.value === '') ElMessage.error("收货人电话不可为空");
-        else if(address === '') ElMessage.error("收货地址不可为空");
+        if(billData.value.custId === '' || billData.value.custId === null) ElMessage.error("收货人不可为空");
         else {
-            let date = dayjs().format('YYYY-MM-DD HH:mm');
             let obj = {
-                consigneeName: consigneeName.value,
-                telephone: telephone.value,
-                address: address.value,
-                orderStatus: '未提交',
-                date: date,
-                billDetail: billDetail.value,
+                consigneeName: billData.value.consigneeName,
+                phone: billData.value.phone,
+                address: billData.value.address,
+                state: 1,
+                billDetail: billData.value.billDetail,
             }
-            if(billFlag.value === 0){
-                billListStore.createBill({...obj, orderId: billListStore.orderId.toString()});
-                billListStore.changeOrderId();
+            if(dialogContent == "新增订单"){
                 ElMessage.success("创建成功");
                 editGoodsDialogVisible.value = false;
             } else {
-                billListStore.changeBill(currentOrderId, {...obj, orderId: currentOrderId});
                 ElMessage.success("保存成功");
                 editGoodsDialogVisible.value = false;
             }
-            queryData();
+            getBillList();
             pageSizeChange();
         }
     }
@@ -548,9 +846,19 @@
     const previewBill = () => {
         previewBillVis.value = true;
         totalMoney.value = 0;
-        billDetail.value.forEach(x => totalMoney.value += x.total);
+        billData.value.billDetail.forEach(x => totalMoney.value += x.total);
         totalMoney.value = totalMoney.value.toFixed(2);
         charTotal.value = digitUppercase(totalMoney.value);
+    }
+
+    // 翻页器
+    const handleSizeChange = (val) => {
+        console.log(`${val} items per page`)
+        getGoodsList();
+    }
+    const handleCurrentChange = (val) => {
+        console.log(`current page: ${val}`)
+        getGoodsList();
     }
 </script>
 
@@ -558,7 +866,12 @@
 .look-bill {
     padding: 10px 0;
     box-sizing: border-box;
-    
+    .query {
+        display: flex;
+        height: 50px;
+        margin-top: 0.5rem;
+        align-items: center;
+    }
     .title {
         padding: 10px 20px;
         font-size: 26px;
@@ -583,6 +896,7 @@
     width: 50%;
     margin-top: 20px;
 }
+
 .billBtns {
     display: flex;
     justify-content: space-between;
@@ -595,8 +909,17 @@
         cursor: pointer;
     }
 }
+.demo-form-inline {
+    display: flex;
+    padding-top: 20px;
+}
+
 .demo-form-inline .el-input {
-  --el-input-width: 220px;
+    --el-input-width: 100px;
+}
+
+.demo-form-inline .el-select {
+    --el-select-width: 100px;
 }
 // 销售单样式
 .billPreview {
@@ -634,5 +957,10 @@
 }
 .stateColor3 {
     color: red;
+}
+.foot-pagination {
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
 }
 </style>
