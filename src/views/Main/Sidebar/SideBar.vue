@@ -8,14 +8,14 @@
                 @open="handleOpen"
                 @close="handleClose"
             >
-            <router-link :to="{name: 'manageRepe'}">
-                <el-menu-item index="1">
+            <el-sub-menu index="1">
                 <template #title>
                     <el-icon><icon-menu /></el-icon>
-                    <span>仓库管理</span>
+                    <span>仓库库存管理</span>
                 </template>
-                </el-menu-item>
-            </router-link>
+                <router-link :to="{name: 'manageRepe'}"><el-menu-item index="1-1">仓库管理</el-menu-item></router-link>
+                <router-link :to="{name: 'repertoryGraph'}"><el-menu-item index="5-2">库存盘点与统计(图像统计)</el-menu-item></router-link>
+            </el-sub-menu>
             <el-sub-menu index="2">
                 <template #title>
                     <el-icon><icon-menu /></el-icon>
@@ -39,16 +39,23 @@
                 </template>
                 <router-link :to="{name: 'lookBill'}"><el-menu-item index="4-1">查看销售单</el-menu-item></router-link>
                 <router-link :to="{name: 'checkBill'}"><el-menu-item index="4-2">审核销售单</el-menu-item></router-link>
-                <router-link :to="{name: 'passedBill'}"><el-menu-item index="4-3">已通过的销售单</el-menu-item></router-link>
+                <router-link :to="{name: 'pos'}"><el-menu-item index="4-3">POS收银台</el-menu-item></router-link>
             </el-sub-menu>
             <el-sub-menu index="5">
+                <template #title>
+                    <el-icon><icon-menu /></el-icon>
+                    <span>采购业务</span>
+                </template>
+                <router-link :to="{name: 'managePurchase'}"><el-menu-item index="5-1">采购管理</el-menu-item></router-link>
+            </el-sub-menu>
+            <!-- <el-sub-menu index="5">
                 <template #title>
                     <el-icon><icon-menu /></el-icon>
                     <span>库存管理</span>
                 </template>
                 <router-link :to="{name: 'repertory'}"><el-menu-item index="5-1">库存盘点与统计</el-menu-item></router-link>
                 <router-link :to="{name: 'repertoryGraph'}"><el-menu-item index="5-2">库存盘点与统计(图像统计)</el-menu-item></router-link>
-            </el-sub-menu>
+            </el-sub-menu> -->
             </el-menu>
         </el-col>
     </div>

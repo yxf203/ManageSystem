@@ -187,9 +187,9 @@ const rules = reactive({
 })
 // 日期格式化显示
 const dateFormatter = (row) => {
-  const updateTime = row.updateTime;
-  const date = moment(updateTime);
-  return date.format("YYYY-MM-DD HH:mm:ss");
+  const createTime = row.createTime;
+  const date = moment(createTime);
+  return date.format("YYYY-MM-DD hh:mm:ss");
 }
 // 翻页器变量
 const currentPage = ref(1);

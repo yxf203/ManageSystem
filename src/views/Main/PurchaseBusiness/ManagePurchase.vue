@@ -4,8 +4,8 @@
         v-model="dialogBatchVisible"
         width="500"
     >
-        <ContentHeader content="批量删除订单"></ContentHeader>
-        <div class="info-message">您确定要批量删除这些订单的信息吗 ?</div>
+        <ContentHeader content="批量删除采购单"></ContentHeader>
+        <div class="info-message">您确定要批量删除这些采购单的信息吗 ?</div>
         <template #footer>
         <div class="dialog-footer">
             <el-button type="primary" @click="confirmDelete(1)">
@@ -20,8 +20,8 @@
         v-model="dialogVisible"
         width="500"
     >
-        <ContentHeader content="删除订单"></ContentHeader>
-        <div class="info-message">您确定要删除该订单的信息吗 ?</div>
+        <ContentHeader content="删除采购单"></ContentHeader>
+        <div class="info-message">您确定要删除该采购单的信息吗 ?</div>
         <template #footer>
         <div class="dialog-footer">
             <el-button type="primary" @click="confirmDelete(0)">
@@ -32,44 +32,47 @@
         </div>
         </template>
     </el-dialog>
+    <!-- 增加/编辑货品 -->
+    <el-dialog v-model="addGoodsVis" width="500">
+    <ContentHeader :content="dialogContent"></ContentHeader>
+    <el-form :model="goodsForm" style="margin-top: 15px;" ref="ruleFormRef" :rules="rules">
+        <el-form-item label="货品名称" :label-width="formLabelWidth" prop="name">
+            <el-input v-model="goodsForm.name" placeholder="请输入货品名称" style="width: 280px;"/>
+        </el-form-item>
+        <!-- <el-form-item label="货品编号" :label-width="formLabelWidth" prop="goodsId">
+            <el-input v-model="form.id" placeholder="请输入货品编号" style="width: 280px;" />
+        </el-form-item> -->
+        <el-form-item label="包装规格" :label-width="formLabelWidth" prop="decri">
+            <el-input v-model="goodsForm.decri" placeholder="请输入货品规格" style="width: 280px;" />
+        </el-form-item>
+        <el-form-item label="进货价" :label-width="formLabelWidth" prop="jhPri">
+            <el-input v-model="goodsForm.jhPri" placeholder="请输入货品进货单价" style="width: 280px;" />
+        </el-form-item>
+        <!-- <el-form-item label="批发价" :label-width="formLabelWidth" prop="pfPri">
+            <el-input v-model="goodsForm.pfPri" placeholder="请输入货品批发单价" style="width: 280px;"  />
+        </el-form-item>
+        <el-form-item label="零售价" :label-width="formLabelWidth" prop="lsPri">
+            <el-input v-model="goodsForm.lsPri" placeholder="请输入货品零售单价" style="width: 280px;" />
+        </el-form-item> -->
+        <el-form-item label="数量" :label-width="formLabelWidth" prop="storage">
+            <el-input v-model="goodsForm.storage" placeholder="请输入进货数目" style="width: 280px;" />
+        </el-form-item>
+    </el-form>
+    <template #footer>
+    <div class="dialog-footer">
+        <el-button type="primary" @click="handleSave(ruleFormRef)">
+        保存
+        </el-button>
+        <el-button @click="addGoodsVis = false">取消</el-button>
+    </div>
+    </template>
+</el-dialog>
     <div class="look-bill">
-        <ContentHeader content="查看销售单"></ContentHeader>
+        <ContentHeader content="查看采购单"></ContentHeader>
         <div class="query">
             <!-- 查询表单 -->
             <el-form :inline="true" :model="formInline" class="demo-form-inline">
-                <el-form-item label="收货人">
-                    <el-select
-                    v-model="formInline.custId"
-                    filterable
-                    clearable
-                    placeholder="请选择"
-                    style="width: 150px;"
-                    >
-                        <el-option
-                        v-for="item in custOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="类型">
-                    <el-select
-                    v-model="formInline.kind"
-                    filterable
-                    clearable
-                    placeholder="请选择"
-                    style="width: 150px;"
-                    >
-                        <el-option
-                        v-for="item in kindOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="所属仓库">
+                <el-form-item label="对应仓库">
                     <el-select
                     v-model="formInline.storeId"
                     filterable
@@ -117,7 +120,7 @@
             </el-form>
         </div>
         <div class="operate">
-            <el-button type="primary" @click="createBill">+ 新增订单</el-button>
+            <el-button type="primary" @click="createBill">+ 新增采购单</el-button>
             <el-button type="danger" @click="handleBatchDel">- 批量删除</el-button>
         </div>
         <!-- 内容表格 -->
@@ -129,13 +132,13 @@
         >
             <el-table-column type="selection" width="80" align="center" />
             <!-- <el-table-column type="index" :index="indexMethod" width="80" label="序号" align="center"/> -->
-            <el-table-column prop="id" label="订单编号" max-width="100" align="center"/>
-            <el-table-column prop="cust" label="收货人" align="center"/>
-            <el-table-column prop="phone" label="收货人电话" max-width="180" align="center"/>
+            <el-table-column prop="id" label="采购单编号" max-width="100" align="center"/>
+            <el-table-column prop="cust" label="供应商" align="center"/>
+            <el-table-column prop="phone" label="供应商电话" max-width="180" align="center"/>
             <el-table-column prop="address" label="收货地址" max-width="180" align="center"/>
             <el-table-column prop="kindName" label="类型" max-width="180" align="center"/>
             <el-table-column prop="store" label="所属仓库" max-width="180" align="center"/>
-            <el-table-column label="订单状态" max-width="150" align="center">
+            <el-table-column label="采购单状态" max-width="150" align="center">
                 <template #default="scope">
                     <p :class="scope.row.stateClass">{{ scope.row.stateName }}</p>
                 </template>
@@ -144,18 +147,11 @@
             <el-table-column label="操作" min-width="150" align="center">
                 <template #default="scope">
                     <el-button 
-                        v-if="scope.row.state === 1"
-                        size="small" 
-                        type="primary"
-                        @click="handleSumbit(scope.$index, scope.row)">
-                        提交
-                    </el-button>
-                    <el-button 
-                        v-if="scope.row.state === 1 || scope.row.state === 5"
+                        v-if="scope.row.state === 3"
                         size="small" 
                         type="warning"
                         @click="handleEdit(scope.$index, scope.row)">
-                        {{ scope.row.state === 1? '编辑': '修改' }}
+                        编辑
                     </el-button>
                     <el-button 
                         size="small" 
@@ -169,7 +165,7 @@
                         type="warning"
                         v-if="scope.row.state === 3"
                         @click="handlePay(scope.$index, scope.row)">
-                        付款
+                        采购付款
                     </el-button>
                     <el-button
                         size="small"
@@ -201,14 +197,14 @@
             >
             </el-pagination>
         </div>
-        <!-- 新建/编辑订单内容 -->
+        <!-- 新建/编辑采购单内容 -->
         <el-dialog v-model="editGoodsDialogVisible" :title="dialogContent" width="1000px" :close-on-click-modal="false" >
             <el-table :data="billData.billDetail" style="width: 100%" max-height="500">
                 <el-table-column fixed prop="goodId" label="货品编号" width="100"  align="center" />
                 <el-table-column prop="name" label="货品名称" width="120"  align="center"/>
                 <el-table-column prop="decri" label="包装规格" width="120"  align="center"/>
                 <el-table-column prop="number" label="数量" width="120" align="center" />
-                <el-table-column prop="singlePrice" label="单价" width="120" align="center" />
+                <el-table-column prop="singlePrice" label="进货价" width="120" align="center" />
                 <el-table-column prop="total" label="金额" width="120" :formatter="totalFormatter" align="center" />
                 <el-table-column prop="notes" label="备注" width="120" align="center" />
                 <el-table-column fixed="right" label="操作" width="120" align="center">
@@ -218,26 +214,10 @@
                 </template>
                 </el-table-column>
             </el-table>
-            <el-button class="mt-4" style="width: 100%" @click="onAddItem" :disabled="billData.storeId === null || billData.storeId === '' || billData.kind === null || billData.kind === ''">新增货品</el-button>
+            <el-button class="mt-4" style="width: 100%" @click="onAddItem" >新增货品</el-button>
             
-            <!-- 订单信息 -->
+            <!-- 采购单信息 -->
             <el-form class="billStyle">
-                <el-form-item label="订单类型">
-                    <el-select
-                    v-model="billData.kind"
-                    filterable
-                    clearable
-                    placeholder="请选择订单类型"
-                    style="width: 200px;"
-                    >
-                        <el-option
-                        v-for="item in kindOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
                 <el-form-item label="所属仓库">
                     <el-select
                     v-model="billData.storeId"
@@ -255,7 +235,7 @@
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="收货人">
+                <el-form-item label="供应商">
                     <el-select
                     v-model="billData.custId"
                     filterable
@@ -273,7 +253,7 @@
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="收货人电话:">
+                <el-form-item label="供应商电话:">
                     <el-input v-model="billData.phone" :disabled="true" />
                 </el-form-item>
                 <el-form-item label="收货地址:">
@@ -281,93 +261,23 @@
                 </el-form-item>
             </el-form>
             <div class="billBtns">
-                <p @click="previewBill">生成销售单预览</p>
+                <p @click="previewBill">生成采购单预览</p>
                 <div>
-                    <el-button class="mt-4" type="primary" @click="onChangeItem">{{dialogContent == "新增订单"? '创建' :'保存'}}</el-button>
+                    <el-button class="mt-4" type="primary" @click="onChangeItem">{{dialogContent == "新增采购单"? '创建' :'保存'}}</el-button>
                     <el-button class="mt-4" @click="editGoodsDialogVisible = false">取消</el-button>
                 </div>
             </div>
         </el-dialog>
-        <!-- 增加/编辑货品 -->
-        <el-dialog v-model="addGoodsVis" :title="dialogContent" width="500px" :close-on-click-modal="false" >
-            <el-form
-                label-width="100px"
-                style="max-width: 500px"
-            >
-                <el-form-item label="货品编号">
-                    <el-select 
-                    v-model="goodsForm.goodId" 
-                    class="m-2" 
-                    placeholder="Select"
-                    clearable
-                    filterable
-                    >
-                        <el-option
-                        v-for="item in idOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="货品名称">
-                    <el-select 
-                    v-model="goodsForm.name" 
-                    class="m-2" 
-                    placeholder="Select"
-                    clearable
-                    filterable
-                    >
-                        <el-option
-                        v-for="item in goodsOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="包装规格">
-                    <el-select 
-                    v-model="goodsForm.decri" 
-                    class="m-2" 
-                    placeholder="Select"
-                    clearable
-                    filterable
-                    >
-                        <el-option
-                        v-for="item in decriOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="数量">
-                    <el-input v-model="goodsForm.number"></el-input>
-                </el-form-item>
-                <el-form-item label="单价">
-                    <el-input disabled :value="goodsForm.singlePrice"></el-input>
-                </el-form-item>
-                <el-form-item label="备注">
-                    <el-input v-model="goodsForm.notes"></el-input>
-                </el-form-item>
-                <el-form-item>
-                    <el-button type="primary" @click="onSubmit">{{ goodsFlag === 0? '新增': '保存' }}</el-button>
-                    <el-button @click="onCancel">取消</el-button>
-                </el-form-item>
-            </el-form>
-        </el-dialog>
-        <!-- 销售单预览 -->
-            <!-- 销售单预览 -->
-        <el-dialog v-model="previewBillVis" title="销售单预览" width="1100px" >
+        <!-- 采购单预览 -->
+        <el-dialog v-model="previewBillVis" title="采购单预览" width="1100px">
             <div class="billPreview">
-                <h2>销售单</h2>
+                <h2>采购单</h2>
                 <p>单号：{{ billData.id }}</p>
                 <table width="1000px" class="tableStyle">
                     <tr class="consigneeLine">
-                        <td :colspan="2">客户名称:{{ billData.consigneeName }}</td>
+                        <td :colspan="2">供应商名称:{{ billData.consigneeName }}</td>
                         <td :colspan="2">联系方式:{{ billData.phone }}</td>
-                        <td :colspan="2">客户地址:{{ billData.address }}</td>
+                        <td :colspan="2">供应商地址:{{ billData.address }}</td>
                         <td :colspan="2">日期: {{ dayjs().format('YYYY-MM-DD') }}</td>
                     </tr>
                     <tr>
@@ -376,7 +286,9 @@
                         <th>货品名称</th>
                         <th>包装规格</th>
                         <th>数量</th>
-                        <th>单价</th>
+                        <th>进货价</th>
+                        <th>批发价</th>
+                        <th>零售价</th>
                         <th>金额</th>
                         <th>备注</th>
                     </tr>
@@ -386,7 +298,7 @@
                         <th>{{ item.name }}</th>
                         <th>{{ item.decri }}</th>
                         <th>{{ item.number }}</th>
-                        <th>{{ item.singlePrice }}</th>
+                        <th>{{ item.jhPri }}</th>
                         <th>{{ item.total.toFixed(2) }}</th>
                         <th>{{ item.notes }}</th>
                     </tr>
@@ -401,12 +313,6 @@
                     </tr>
                 </table>
             </div>
-            <template #footer>
-            <span class="dialog-footer">
-                <p class="profit" v-show="profit != NaN">本单毛利润为： {{ profit }} 元</p>
-                <el-button type="primary" v-print="'#printMe'">打印</el-button>
-            </span>
-            </template>
         </el-dialog>
     </div>
 </template>
@@ -418,6 +324,24 @@
     import ContentHeader from '../../../components/ContentHeader.vue';
     import baseAxios from '../../../api/baseAxios.js';
     import moment from 'moment';
+    const formLabelWidth = '140px'
+    const ruleFormRef = ref()
+    const rules = reactive({
+        name: [
+            { required: true, message: '请输入货品名称', trigger: 'blur' },
+            { min: 1, max: 20, message: '货品名称长度应为1-20', trigger: 'blur' },
+        ],
+        decri: [
+            { required: true, message: '请输入规格', trigger: 'blur' },
+            { min: 1, max: 20, message: '规格应为1-20位', trigger: 'blur' },
+        ],
+        storage: [
+            { required: true, message: '请输入货品库存数量', trigger: 'blur' },
+        ],
+        jhPri: [
+            { required: true, message: '请输入进货价', trigger: 'blur' },
+        ],
+    })
     // 批量删除框部分
     const dialogBatchVisible = ref(false)
     // 确认删除框部分
@@ -428,59 +352,46 @@
     const pageSize = ref(10);
     const total = ref(1);
     // 弹出框部分
-    const dialogContent = ref("新增订单"); 
+    const dialogContent = ref("新增采购单"); 
     const totalFormatter = (row) => {
         console.log(typeof row.total);
         return row.total.toFixed(2);
     }
-    // 新建编辑订单页面可见性
+    // 新建编辑采购单页面可见性
     const editGoodsDialogVisible = ref(false);
     const formInline = reactive({
-        kind: null,
+        // kind: null,
         state: null,
-        custId: null,
+        // custId: null,
         storeId: null,
         createTime: [null, null],
     })
 
-    // 记录当前订单内订单编辑是什么模式，goodsFlag 为0时为新增，为1时为编辑
+    // 记录当前采购单内采购单编辑是什么模式，goodsFlag 为0时为新增，为1时为编辑
     let goodsFlag = ref(0);
     let goodsIndex = 0;
-    // 新增订单信息
-        // 新增订单可见
+    // 新增采购单信息
+        // 新增采购单可见
     const addGoodsVis = ref(false);
     const goodsForm = ref({
-        goodId: '',
+        // goodId: '',
         name: '',
         decri: '',
-        number: '',
+        storage: '',
         jhPri: '',
-        singlePrice: '',
         notes: '',
     });
-    // 订单信息
+    // 采购单信息
     // 查找信息
     // 常量部分
     const stateOptions = [
         {
-            label: "未提交",
-            value: 1,
-        },
-        {
-            label: "待审核",
-            value: 2,
-        },
-        {
-            label: "未付款",
+            label: "未采购",
             value: 3,
         },
         {
-            label: "已付款",
+            label: "已采购",
             value: 4,
-        },
-        {
-            label: "未通过",
-            value: 5
         },
         {
             label: "已退货",
@@ -488,26 +399,9 @@
         }
     ];
     const stateMap = {
-        1: "未提交",
-        2: "待审核",
-        3: "未付款",
-        4: "已付款",
-        5: "未通过",
+        3: "未采购",
+        4: "已采购",
         6: "已退货"
-    }
-    const kindOptions = [
-        {
-            label: "批发单",
-            value: 1,
-        },
-        {
-            label: "零售单",
-            value: 2,
-        },
-    ]
-    const kindMap = {
-        1: "批发单",
-        2: "零售单"
     }
     const custMap = {};
     const custOptions = ref([]);
@@ -521,8 +415,7 @@
             if(res.data.code){
                 let temp_data = res.data.data;
                 temp_data.forEach(x => {
-                    console.log(x.kind);
-                    if(x.kind === 1 || x.kind === 2){
+                    if(x.kind == 3){
                         custOptions.value.push({
                             label: x.name,
                             value: x.id
@@ -621,49 +514,17 @@
         })
     }
     getStoreList();
-    let decriOptions = ref([]);
-    // 实现缺省设计
-    watch(() => goodsForm.value.goodId, (id) => {
-        if(id != ''){
-            let temp = goodsList.value.filter(x => x.id === id);
-            goodsForm.value.name = temp[0].name;
-            goodsForm.value.decri = temp[0].decri;
-            goodsForm.value.jhPri = temp[0].jhPri;
-            if(billData.value.kind === 1)goodsForm.value.singlePrice = temp[0].pfPri;
-            else if(billData.value.kind === 2) goodsForm.value.singlePrice = temp[0].lsPri;
-        } else {
-            goodsForm.value.name = '';
-            goodsForm.value.decri = '';
-            goodsForm.value.singlePrice = '';
-            goodsForm.value.jhPri = null;
-        }
-    })
-    watch(() => goodsForm.value.name, (name) => {
-        if(name === ''){
-            decriOptions.value = [];
-            goodsForm.value.goodId = '';
-        } else {
-            let temp = goodsList.value.filter(x => x.name === name);
-            decriOptions.value = temp.map(x => ({value: x.decri, label: x.decri}));
-        }
-    })
-    watch(() => goodsForm.value.decri, (decri) => {
-        if(decri !== ''){
-            let temp = goodsList.value.filter(x => x.name === goodsForm.value.name && x.decri === decri);
-            goodsForm.value.goodId = temp[0].id;
-        }
-    })
-    // 增加新增订单按钮
+    // 增加新增采购单按钮
     const onSubmit = () => {
         let flag = true;
         for(let i = 0; i < goodsForm.value.number.length; i++){
-            if(!(goodsForm.value.number[i] >= '0' && goodsForm.value.number[i] <= '9')){
+            if(!(goodsForm.value.storage[i] >= '0' && goodsForm.value.storage[i] <= '9')){
                 flag = false;
                 break;
             }
         }
         if(flag){
-            if(goodsForm.value.goodId === '') ElMessage.error("订单信息不可为空");
+            if(goodsForm.value.goodId === '') ElMessage.error("采购单信息不可为空");
             else {
                 if(!goodsForm.value.number) ElMessage.error("数量不能为空");
                 else if(parseInt(goodsForm.value.number) === 0) ElMessage.error("数量不能为0");
@@ -687,11 +548,11 @@
             ElMessage.error("输入的数量需要是整数格式");
         }
     }
-    // 取消添加订单
+    // 取消添加采购单
     const onCancel = () => {
        addGoodsVis.value = false;
     }
-    // 获取所有订单信息
+    // 获取所有采购单信息
     const tableData = ref([]);
     function getBillList(){
         if(formInline.createTime == null){
@@ -700,7 +561,7 @@
         let params = {
             page: currentPage.value,
             pageSize: pageSize.value,
-            kind: formInline.kind,
+            kind: 3,
             state: formInline.state,
             storeId: formInline.storeId,
             custId: formInline.custId,
@@ -722,7 +583,6 @@
                 x.phone = custDetail[x.custId].phone;
                 x.address = custDetail[x.custId].address;
                 x.store = storeMap[x.storeId];
-                x.kindName = kindMap[x.kind];
             });
             total.value = res.data.data.total;
         }).catch(err => {
@@ -730,7 +590,7 @@
         })
     }
     getBillList();
-    // 订单信息
+    // 采购单信息
     const billData = ref({
         id: null,
         kind: null,
@@ -741,7 +601,7 @@
         address: '',
         billDetail: [],
     })
-    // 实时更新收货人信息
+    // 实时更新供应商信息
     function updateDetail(){
         if(billData.value.custId){
             billData.value.consigneeName = custDetail[billData.value.custId].name;
@@ -777,11 +637,11 @@
             }
         })
     }
-    // 处理订单的提交
+    // 处理采购单的提交
     const handleSumbit = (index, row) => {
         ElMessageBox.confirm( 
             '确认要提交吗？提交后将不能再修改',
-            '提交订单',
+            '提交采购单',
             {
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
@@ -816,8 +676,8 @@
             })
         })
     }
-    // 处理订单的编辑
-    const currentState = ref(null);
+    // 处理采购单的编辑
+    let originIds = [];
     const handleEdit = (index, row, type=0) => {
         console.log(index, row)
         baseAxios({
@@ -827,12 +687,13 @@
                 slipId: row.id,
             }
         }).then(res => {
-            console.log("编辑订单");
+            console.log("编辑采购单");
             console.log(res.data);
             billData.value = row;
-            billData.value.consigneeName = custDetail[billData.value.custId].name;
             billData.value.billDetail = [];
+            originIds = [];
             res.data.data.forEach(x => {
+                originIds.push(x.id);
                 let goodDetail = goodsDetail[x.goodId];
                 let temp = {
                     ...x,
@@ -847,10 +708,9 @@
             console.log("billData");
             console.log(billData.value);
             getGoodsList();
-            dialogContent.value = "编辑订单";
+            dialogContent.value = "编辑采购单";
             if(!type) editGoodsDialogVisible.value = true;
             else {
-                currentState.value = 1;
                 previewBill();
             }
             // form.value = res.data.data;
@@ -859,7 +719,7 @@
         })
 
     }
-    // 处理订单内订单的编辑
+    // 处理采购单内采购单的编辑
     const editGoods = (index) => {
         // goodsForm.value = billData.billDetail.value[index];
         for(let key in goodsForm.value){
@@ -870,11 +730,11 @@
         goodsIndex = index;
 
     }
-    // 处理订单内订单的删除
+    // 处理采购单内采购单的删除
     const handleDeleteGoods = (index) => {
         ElMessageBox.confirm(
-            '确认要删除该订单？',
-            '删除订单',
+            '确认要删除该采购单？',
+            '删除采购单',
             {
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
@@ -885,7 +745,7 @@
             // ElMessage.success("删除成功");
         })
     }
-    // 删除订单
+    // 删除采购单
         // 处理多选 用于批量删除
     const multipleSelection = ref([])
     const handleSelectionChange = (val) => {
@@ -925,9 +785,9 @@
             }
         })
     }
-    // 创建订单
+    // 创建采购单
     const createBill = () => {
-        dialogContent.value = "新增订单";
+        dialogContent.value = "新增采购单";
         editGoodsDialogVisible.value = true;
         billData.value.billDetail = [];
         billData.value.custId = null;
@@ -942,7 +802,7 @@
         dialogBatchVisible.value = true;
     }
 
-    // 点击增加订单按钮
+    // 点击增加采购单按钮
     const onAddItem = () => {
         addGoodsVis.value = true;
         goodsFlag.value = 0;//置为新增
@@ -950,14 +810,14 @@
             goodsForm.value[key] = '';
         }
     }
-    // 点击新增或者保存订单
+    // 点击新增或者保存采购单
     const onChangeItem = () => {
-        if(billData.value.custId === '' || billData.value.custId === null) ElMessage.error("收货人不可为空");
+        if(billData.value.custId === '' || billData.value.custId === null) ElMessage.error("供应商不可为空");
         else {
             let method = '';
-            if(dialogContent.value == "新增订单"){
+            if(dialogContent.value == "新增采购单"){
                 method = 'post';
-            } else if(dialogContent.value == "编辑订单"){
+            } else if(dialogContent.value == "编辑采购单"){
                 method = 'put';
             }
             let data = {
@@ -1041,21 +901,14 @@
             })
         }
     }
-    // 生成销售单预览
+    // 生成采购单预览
     const previewBillVis = ref(false);
     const totalMoney = ref(0);
     const charTotal = ref('');
-    const profit = ref(0);
     const previewBill = () => {
         totalMoney.value = 0;
-        profit.value = 0;
-        billData.value.billDetail.forEach(x => {
-            console.log(x);
-            totalMoney.value += x.total
-            profit.value += x.number * (x.singlePrice - x.jhPri);
-        });
+        billData.value.billDetail.forEach(x => totalMoney.value += x.total);
         totalMoney.value = totalMoney.value.toFixed(2);
-        profit.value = profit.value.toFixed(2);
         charTotal.value = digitUppercase(totalMoney.value);
         previewBillVis.value = true;
 
@@ -1069,9 +922,6 @@
     const handleCurrentChange = (val) => {
         console.log(`current page: ${val}`)
         getBillList();
-    }
-    function onClosePrint(){
-        currentState.value = 0;
     }
 </script>
 
@@ -1138,7 +988,7 @@
 .demo-form-inline .el-select {
     --el-select-width: 100px;
 }
-// 销售单样式
+// 采购单样式
 .billPreview {
     display: flex;
     flex-direction: column;
@@ -1165,7 +1015,7 @@
         }
     }
 }
-// 订单状态
+// 采购单状态
 
 
 .stateColor1 {

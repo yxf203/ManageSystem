@@ -1,4 +1,42 @@
 <template>
+    <!-- 调拨框 -->
+    <el-dialog
+        v-model="dialogAdjustVisible"
+        width="500"
+    >
+        <ContentHeader content="调拨货品"></ContentHeader>
+        <div class="info-message">
+            <el-form>
+                <el-form-item label="调去仓库">
+                    <el-select
+                    v-model="adjustData.storeId"
+                    filterable
+                    clearable
+                    placeholder="请选择要调到哪个仓库"
+                    style="width: 200px;"
+                    >
+                        <el-option
+                        v-for="item in storeOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="调拨数量">
+                    <el-input v-model="adjustData.number" placeholder="请输入要调拨的数量"/>
+                </el-form-item>
+            </el-form>
+        </div>
+        <template #footer>
+        <div class="dialog-footer">
+            <el-button type="primary" @click="confirmAdjust()">
+                确定
+            </el-button>
+            <el-button @click="dialogAdjustVisible = false">取消</el-button>
+        </div>
+        </template>
+    </el-dialog>
     <!-- 批量删除确认框 -->
     <el-dialog
         v-model="dialogBatchVisible"
@@ -152,6 +190,12 @@
                     <el-button 
                         size="small" 
                         type="warning"
+                        @click="handleAdjust(scope.$index, scope.row)">
+                        调拨
+                    </el-button>
+                    <el-button 
+                        size="small" 
+                        type="warning"
                         @click="handleEdit(scope.$index, scope.row)">
                         编辑
                     </el-button>
@@ -190,6 +234,9 @@ import { reactive, ref } from 'vue';
 import moment from 'moment';
 const props = defineProps(["store", "storeId"]);
 console.log(props.storeId);
+
+
+
 // 校验规则
 function validateId(rule, value) {
   // 使用正则表达式验证用户名是否只包含数字和字母
@@ -277,31 +324,31 @@ let stateMap = {
     1: "已上架",
     2: "未上架"
 };
-// const storeOptions = ref([]);
-// const storeMap = ref({});
-// function getStoreList(){
-//     baseAxios({
-//         url: '/stores/all',
-//         method: 'get',
-//     }).then(res => {
-//         console.log(res.data);
-//         if(res.data.code){
-//             let temp_data = res.data.data;
-//             temp_data.forEach(x => {
-//                 storeOptions.value.push({
-//                     label: x.name,
-//                     value: x.id
-//                 });
-//                 storeMap.value[x.id] = x.name;
-//             })
-//         } else {
-//             ElMessage.error(res.data.msg);
-//         }
-//     }).catch(err => {
-//         console.log(err.message);
-//     })
-// }
-// getStoreList();
+const storeOptions = ref([]);
+const storeMap = ref({});
+function getStoreList(){
+    baseAxios({
+        url: '/stores/all',
+        method: 'get',
+    }).then(res => {
+        console.log(res.data);
+        if(res.data.code){
+            let temp_data = res.data.data;
+            temp_data.forEach(x => {
+                storeOptions.value.push({
+                    label: x.name,
+                    value: x.id
+                });
+                storeMap.value[x.id] = x.name;
+            })
+        } else {
+            ElMessage.error(res.data.msg);
+        }
+    }).catch(err => {
+        console.log(err.message);
+    })
+}
+getStoreList();
 // 这里是查询表单部分
 const formInline = reactive({
     name: "",
@@ -354,6 +401,29 @@ const form = ref({});
     // 设置弹出框是否可见以及内部输入框的width
 const dialogFormVisible = ref(false)
 const formLabelWidth = '140px'
+function addNewGood(method, tip){
+    baseAxios({
+        url: "/goods",
+        method: method,
+        data: form.value,
+    }).then(res => {
+        console.log(res.data);
+        if(res.data.code){
+            dialogFormVisible.value = false;
+            if(tip){
+                ElMessage({
+                    message: tip,
+                    type: 'success',
+                })
+            }
+            getGoodsList();
+        } else {
+            ElMessage.error(res.data.msg);
+        }
+    }).catch(err => {
+        console.log(err.message);
+    })
+}
     // 对按钮的处理
 async function handleSave(formEl){
     if (!formEl) return
@@ -369,26 +439,7 @@ async function handleSave(formEl){
             }
             form.value["storeId"] = props.storeId;
             console.log(form.value);
-
-            baseAxios({
-                url: "/goods",
-                method: method,
-                data: form.value,
-            }).then(res => {
-                console.log(res.data);
-                if(res.data.code){
-                    dialogFormVisible.value = false;
-                    ElMessage({
-                        message: '保存成功！',
-                        type: 'success',
-                    })
-                    getGoodsList();
-                } else {
-                    ElMessage.error(res.data.msg);
-                }
-            }).catch(err => {
-                console.log(err.message);
-            })
+            addNewGood(method, '保存成功！');
         } else {
             console.log('error submit!', fields)
         }
@@ -437,6 +488,59 @@ const handleEdit = (index, row) => {
     })
     dialogContent.value = "编辑货品";
     dialogFormVisible.value = true;
+}
+async function checkExist(name, decri, storeId){
+    console.log(name, decri)
+    const response = await baseAxios({
+        url: '/goods/list',
+        method: 'get',
+        params:{
+            name,
+            decri,
+            storeId
+        }
+    });
+    console.log(response);
+    if(response.data.data.length === 0) return null;
+    else return response.data.data[0];
+}
+// 调拨
+const dialogAdjustVisible = ref(false);
+const adjustData = ref({
+    goodDetail: null,
+    storeId: null,
+    number: null,
+});
+const handleAdjust = (index, row) => {
+    dialogAdjustVisible.value = true;
+    adjustData.value.storeId = null;
+    adjustData.value.number = null;
+    adjustData.value.goodDetail = row;
+}
+async function confirmAdjust(){
+    console.log(1);
+    const adjust = await checkExist(adjustData.value.goodDetail.name,adjustData.value.goodDetail.decri, adjustData.value.storeId);
+    let method;
+    console.log(adjust);
+    if(!adjust){
+        method = 'post';
+        form.value = {...adjustData.value.goodDetail};
+        form.value['id'] = null;
+        form.value['storeId'] = adjustData.value.storeId;
+        form.value['storage'] = adjustData.value.number;
+        form.value['state'] = 2;
+    } else {
+        method = 'put';
+        form.value = {...adjust};
+        console.log(adjust);
+        form.value['storage'] = Number(adjustData.value.number) + Number(adjust.storage);
+    }
+    addNewGood(method, null);
+    form.value = {...adjustData.value.goodDetail};
+    form.value['storage'] = Number(adjustData.value.goodDetail.storage) - Number(adjustData.value.number);
+    addNewGood('put', '调拨成功');
+    dialogAdjustVisible.value = false;
+    getGoodsList();
 }
 const temp_id = ref(0);
 const handleDelete = (index, row) => {

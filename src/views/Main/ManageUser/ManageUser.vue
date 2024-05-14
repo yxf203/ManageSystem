@@ -234,8 +234,8 @@ const pageSize = ref(10);
 const total = ref(1);
 // 日期格式化显示
 const dateFormatter = (row) => {
-  const updateTime = row.updateTime;
-  const date = moment(updateTime);
+  const createTime = row.createTime;
+  const date = moment(createTime);
   return date.format("YYYY-MM-DD HH:mm:ss");
 }
 // 选项变量们
@@ -378,7 +378,7 @@ function handleAdd(){
         "name": "",
         "gender": null,
         "kind": null,
-        "updateTime": null
+        "createTime": null
     }
     username_disabled.value = false;
     dialogContent.value = "新增用户";

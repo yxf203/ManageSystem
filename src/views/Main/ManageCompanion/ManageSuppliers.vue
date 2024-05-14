@@ -193,8 +193,8 @@ const pageSize = ref(10);
 const total = ref(1);
 // 日期格式化显示
 const dateFormatter = (row) => {
-  const updateTime = row.updateTime;
-  const date = moment(updateTime);
+  const createTime = row.createTime;
+  const date = moment(createTime);
   return date.format("YYYY-MM-DD HH:mm:ss");
 }
 // 选项变量们
@@ -227,11 +227,10 @@ function getCustList(){
         pageSize: pageSize.value,
         name: formInline.name,
         gender: formInline.gender,
-        kind: 3,
     }
     console.log(params);
     baseAxios({
-        url: '/custs',
+        url: '/custs/sups',
         method: 'get',
         params
     }).then(res => {

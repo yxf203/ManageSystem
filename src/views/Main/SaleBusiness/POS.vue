@@ -37,7 +37,7 @@
         <div class="query">
             <!-- 查询表单 -->
             <el-form :inline="true" :model="formInline" class="demo-form-inline">
-                <el-form-item label="收货人">
+                <!-- <el-form-item label="客户">
                     <el-select
                     v-model="formInline.custId"
                     filterable
@@ -52,23 +52,7 @@
                         :value="item.value"
                         />
                     </el-select>
-                </el-form-item>
-                <el-form-item label="类型">
-                    <el-select
-                    v-model="formInline.kind"
-                    filterable
-                    clearable
-                    placeholder="请选择"
-                    style="width: 150px;"
-                    >
-                        <el-option
-                        v-for="item in kindOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
+                </el-form-item> -->
                 <el-form-item label="所属仓库">
                     <el-select
                     v-model="formInline.storeId"
@@ -79,22 +63,6 @@
                     >
                         <el-option
                         v-for="item in storeOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="状态">
-                    <el-select
-                    v-model="formInline.state"
-                    filterable
-                    clearable
-                    placeholder="请选择"
-                    style="width: 150px;"
-                    >
-                        <el-option
-                        v-for="item in stateOptions"
                         :key="item.value"
                         :label="item.label"
                         :value="item.value"
@@ -130,8 +98,8 @@
             <el-table-column type="selection" width="80" align="center" />
             <!-- <el-table-column type="index" :index="indexMethod" width="80" label="序号" align="center"/> -->
             <el-table-column prop="id" label="订单编号" max-width="100" align="center"/>
-            <el-table-column prop="cust" label="收货人" align="center"/>
-            <el-table-column prop="phone" label="收货人电话" max-width="180" align="center"/>
+            <el-table-column prop="cust" label="客户" align="center"/>
+            <el-table-column prop="phone" label="客户电话" max-width="180" align="center"/>
             <el-table-column prop="address" label="收货地址" max-width="180" align="center"/>
             <el-table-column prop="kindName" label="类型" max-width="180" align="center"/>
             <el-table-column prop="store" label="所属仓库" max-width="180" align="center"/>
@@ -144,32 +112,11 @@
             <el-table-column label="操作" min-width="150" align="center">
                 <template #default="scope">
                     <el-button 
-                        v-if="scope.row.state === 1"
-                        size="small" 
-                        type="primary"
-                        @click="handleSumbit(scope.$index, scope.row)">
-                        提交
-                    </el-button>
-                    <el-button 
-                        v-if="scope.row.state === 1 || scope.row.state === 5"
-                        size="small" 
-                        type="warning"
-                        @click="handleEdit(scope.$index, scope.row)">
-                        {{ scope.row.state === 1? '编辑': '修改' }}
-                    </el-button>
-                    <el-button 
                         size="small" 
                         type="primary"
                         v-if="scope.row.state === 3 || scope.row.state === 4 || scope.row.state === 6"
                         @click="handleEdit(scope.$index, scope.row, 1)">
                         查看
-                    </el-button>
-                    <el-button 
-                        size="small" 
-                        type="warning"
-                        v-if="scope.row.state === 3"
-                        @click="handlePay(scope.$index, scope.row)">
-                        付款
                     </el-button>
                     <el-button
                         size="small"
@@ -177,13 +124,6 @@
                         v-if="scope.row.state != 4 && scope.row.state != 5"
                         @click="handleDelete(scope.$index, scope.row)">
                         删除
-                    </el-button>
-                    <el-button 
-                        size="small" 
-                        type="danger"
-                        v-if="scope.row.state === 4"
-                        @click="handleRefund(scope.$index, scope.row)">
-                        退货
                     </el-button>
                 </template>
             </el-table-column>
@@ -218,11 +158,11 @@
                 </template>
                 </el-table-column>
             </el-table>
-            <el-button class="mt-4" style="width: 100%" @click="onAddItem" :disabled="billData.storeId === null || billData.storeId === '' || billData.kind === null || billData.kind === ''">新增货品</el-button>
+            <el-button class="mt-4" style="width: 100%" @click="onAddItem" :disabled="billData.storeId === null || billData.storeId === ''">新增货品</el-button>
             
             <!-- 订单信息 -->
             <el-form class="billStyle">
-                <el-form-item label="订单类型">
+                <!-- <el-form-item label="订单类型">
                     <el-select
                     v-model="billData.kind"
                     filterable
@@ -237,7 +177,7 @@
                         :value="item.value"
                         />
                     </el-select>
-                </el-form-item>
+                </el-form-item> -->
                 <el-form-item label="所属仓库">
                     <el-select
                     v-model="billData.storeId"
@@ -255,7 +195,7 @@
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="收货人">
+                <el-form-item label="客户">
                     <el-select
                     v-model="billData.custId"
                     filterable
@@ -273,7 +213,7 @@
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="收货人电话:">
+                <el-form-item label="客户电话:">
                     <el-input v-model="billData.phone" :disabled="true" />
                 </el-form-item>
                 <el-form-item label="收货地址:">
@@ -281,9 +221,9 @@
                 </el-form-item>
             </el-form>
             <div class="billBtns">
-                <p @click="previewBill">生成销售单预览</p>
+                <!-- <p @click="previewBill">生成销售单预览</p> -->
                 <div>
-                    <el-button class="mt-4" type="primary" @click="onChangeItem">{{dialogContent == "新增订单"? '创建' :'保存'}}</el-button>
+                    <el-button class="mt-4" type="primary" @click="onChangeItem">付款</el-button>
                     <el-button class="mt-4" @click="editGoodsDialogVisible = false">取消</el-button>
                 </div>
             </div>
@@ -359,8 +299,8 @@
         </el-dialog>
         <!-- 销售单预览 -->
             <!-- 销售单预览 -->
-        <el-dialog v-model="previewBillVis" title="销售单预览" width="1100px" >
-            <div class="billPreview">
+        <el-dialog v-model="previewBillVis" title="销售单预览" width="1100px">
+            <div class="billPreview" id="printMe">
                 <h2>销售单</h2>
                 <p>单号：{{ billData.id }}</p>
                 <table width="1000px" class="tableStyle">
@@ -395,15 +335,11 @@
                         <th>{{ totalMoney }}</th>
                         <th></th>
                     </tr>
-                    <tr style="text-align: left;">
-                        <th :colspan="5" style="padding-left: 7px;">审核人：</th>
-                        <th :colspan="3" style="padding-left: 7px;">审核日期：</th>
-                    </tr>
                 </table>
             </div>
             <template #footer>
             <span class="dialog-footer">
-                <p class="profit" v-show="profit != NaN">本单毛利润为： {{ profit }} 元</p>
+                <p class="profit">本单毛利润为： {{ profit }} 元</p>
                 <el-button type="primary" v-print="'#printMe'">打印</el-button>
             </span>
             </template>
@@ -521,8 +457,7 @@
             if(res.data.code){
                 let temp_data = res.data.data;
                 temp_data.forEach(x => {
-                    console.log(x.kind);
-                    if(x.kind === 1 || x.kind === 2){
+                    if(x.name === '临时客户'){
                         custOptions.value.push({
                             label: x.name,
                             value: x.id
@@ -629,8 +564,7 @@
             goodsForm.value.name = temp[0].name;
             goodsForm.value.decri = temp[0].decri;
             goodsForm.value.jhPri = temp[0].jhPri;
-            if(billData.value.kind === 1)goodsForm.value.singlePrice = temp[0].pfPri;
-            else if(billData.value.kind === 2) goodsForm.value.singlePrice = temp[0].lsPri;
+             goodsForm.value.singlePrice = temp[0].lsPri;
         } else {
             goodsForm.value.name = '';
             goodsForm.value.decri = '';
@@ -700,10 +634,10 @@
         let params = {
             page: currentPage.value,
             pageSize: pageSize.value,
-            kind: formInline.kind,
+            kind: 2,
             state: formInline.state,
             storeId: formInline.storeId,
-            custId: formInline.custId,
+            custId: 6,
             begin: formInline.createTime[0],
             end: formInline.createTime[1],
         }
@@ -741,7 +675,7 @@
         address: '',
         billDetail: [],
     })
-    // 实时更新收货人信息
+    // 实时更新客户信息
     function updateDetail(){
         if(billData.value.custId){
             billData.value.consigneeName = custDetail[billData.value.custId].name;
@@ -817,7 +751,7 @@
         })
     }
     // 处理订单的编辑
-    const currentState = ref(null);
+    let originIds = [];
     const handleEdit = (index, row, type=0) => {
         console.log(index, row)
         baseAxios({
@@ -832,7 +766,9 @@
             billData.value = row;
             billData.value.consigneeName = custDetail[billData.value.custId].name;
             billData.value.billDetail = [];
+            originIds = [];
             res.data.data.forEach(x => {
+                originIds.push(x.id);
                 let goodDetail = goodsDetail[x.goodId];
                 let temp = {
                     ...x,
@@ -850,7 +786,6 @@
             dialogContent.value = "编辑订单";
             if(!type) editGoodsDialogVisible.value = true;
             else {
-                currentState.value = 1;
                 previewBill();
             }
             // form.value = res.data.data;
@@ -950,23 +885,17 @@
             goodsForm.value[key] = '';
         }
     }
-    // 点击新增或者保存订单
+    // 点击付款
     const onChangeItem = () => {
-        if(billData.value.custId === '' || billData.value.custId === null) ElMessage.error("收货人不可为空");
+        if(billData.value.custId === '' || billData.value.custId === null) ElMessage.error("客户不可为空");
         else {
-            let method = '';
-            if(dialogContent.value == "新增订单"){
-                method = 'post';
-            } else if(dialogContent.value == "编辑订单"){
-                method = 'put';
-            }
+            let method = 'post';
             let data = {
-                kind: billData.value.kind,
-                state: 1,
+                kind: 2,
+                state: 4,
                 storeId: billData.value.storeId,
                 custId: billData.value.custId,
             }
-            if(method == 'put') data['id'] = billData.value.id;
             baseAxios({
                 url: "/slips",
                 method: method,
@@ -976,40 +905,17 @@
                 let slipId;
                 let t_data = [];
                 let url;
-                if(method === 'post'){
-                    slipId = res.data.data;
-                    url = '/slipDetails';
-                    billData.value.billDetail.forEach(x => {
-                        t_data.push({
-                            "slipId": slipId,
-                            "goodId": x.goodId,
-                            "number": x.number,
-                            "notes": x.notes
-                        })
-                    });
-                } else if(method === 'put'){
-                    slipId = billData.value.id;
-                    url = '/slipDetails/' + slipId;
-                    billData.value.billDetail.forEach(x => {
-                        if(x.id){
-                            t_data.push({
-                                "id": x.id,
-                                "slipId": slipId,
-                                "goodId": x.goodId,
-                                "number": x.number,
-                                "notes": x.notes
-                            })
-                        } else {
-                            t_data.push({
-                                "slipId": slipId,
-                                "goodId": x.goodId,
-                                "number": x.number,
-                                "notes": x.notes
-                            })
-                        }
-                    });
-                }
-                if(method === 'post' && t_data.length === 0){
+                slipId = res.data.data;
+                url = '/slipDetails';
+                billData.value.billDetail.forEach(x => {
+                    t_data.push({
+                        "slipId": slipId,
+                        "goodId": x.goodId,
+                        "number": x.number,
+                        "notes": x.notes
+                    })
+                });
+                if(t_data.length === 0){
                     editGoodsDialogVisible.value = false;
                     ElMessage({
                         message: '保存成功！',
@@ -1026,7 +932,7 @@
                     if(res.data.code){
                         editGoodsDialogVisible.value = false;
                         ElMessage({
-                            message: '保存成功！',
+                            message: '付款成功！',
                             type: 'success',
                         })
                         getBillList();
@@ -1070,9 +976,6 @@
         console.log(`current page: ${val}`)
         getBillList();
     }
-    function onClosePrint(){
-        currentState.value = 0;
-    }
 </script>
 
 <style lang="scss" scoped>
@@ -1113,7 +1016,12 @@
     width: 50%;
     margin-top: 20px;
 }
-
+.profit {
+    display: flex;
+    font-size: 1.2rem;
+    margin-top: 1rem;
+    justify-content: flex-end;
+}
 .billBtns {
     display: flex;
     justify-content: space-between;

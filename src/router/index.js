@@ -13,7 +13,9 @@ import ManageUser from '@/views/Main/ManageUser/ManageUser.vue';
 // 销售业务
 import CheckBill from '@/views/Main/SaleBusiness/CheckBill.vue';
 import LookBill from '@/views/Main/SaleBusiness/LookBill.vue';
-import PassedBill from '@/views/Main/SaleBusiness/PassedBill.vue';
+import POS from '@/views/Main/SaleBusiness/POS.vue';
+// 采购业务
+import ManagePurchase from '@/views/Main/PurchaseBusiness/ManagePurchase.vue';
 // 库存管理
 import Repertory from '@/views/Main/ManageStore/Repertory.vue';
 import RepertoryGraph from '@/views/Main/ManageStore/RepertoryGraph.vue';
@@ -73,9 +75,15 @@ const routes = [
                 component: CheckBill,
             },
             {
-                path: 'passedBill',
-                name: 'passedBill',
-                component: PassedBill,
+                path: 'pos',
+                name: 'pos',
+                component: POS,
+            },
+            // 采购业务
+            {
+                path: 'managePurchase',
+                name: 'managePurchase',
+                component: ManagePurchase
             },
             // 库存管理
             {
