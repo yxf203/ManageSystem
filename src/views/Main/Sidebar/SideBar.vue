@@ -14,7 +14,7 @@
                     <span>仓库库存管理</span>
                 </template>
                 <router-link :to="{name: 'manageRepe'}"><el-menu-item index="1-1">仓库管理</el-menu-item></router-link>
-                <router-link :to="{name: 'repertoryGraph'}"><el-menu-item index="5-2">库存盘点与统计(图像统计)</el-menu-item></router-link>
+                <router-link :to="{name: 'repertoryGraph'}"><el-menu-item index="1-2">库存盘点与统计(图像统计)</el-menu-item></router-link>
             </el-sub-menu>
             <el-sub-menu index="2">
                 <template #title>
@@ -47,15 +47,8 @@
                     <span>采购业务</span>
                 </template>
                 <router-link :to="{name: 'managePurchase'}"><el-menu-item index="5-1">采购管理</el-menu-item></router-link>
+                <router-link :to="{name: 'checkPurchase'}"><el-menu-item index="5-2">审核采购单</el-menu-item></router-link>
             </el-sub-menu>
-            <!-- <el-sub-menu index="5">
-                <template #title>
-                    <el-icon><icon-menu /></el-icon>
-                    <span>库存管理</span>
-                </template>
-                <router-link :to="{name: 'repertory'}"><el-menu-item index="5-1">库存盘点与统计</el-menu-item></router-link>
-                <router-link :to="{name: 'repertoryGraph'}"><el-menu-item index="5-2">库存盘点与统计(图像统计)</el-menu-item></router-link>
-            </el-sub-menu> -->
             </el-menu>
         </el-col>
     </div>

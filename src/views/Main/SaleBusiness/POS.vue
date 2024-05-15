@@ -33,7 +33,7 @@
         </template>
     </el-dialog>
     <div class="look-bill">
-        <ContentHeader content="查看销售单"></ContentHeader>
+        <ContentHeader content="POS收银台"></ContentHeader>
         <div class="query">
             <!-- 查询表单 -->
             <el-form :inline="true" :model="formInline" class="demo-form-inline">
@@ -634,7 +634,6 @@
         let params = {
             page: currentPage.value,
             pageSize: pageSize.value,
-            kind: 2,
             state: formInline.state,
             storeId: formInline.storeId,
             custId: 6,
@@ -643,7 +642,7 @@
         }
         console.log(params);
         baseAxios({
-            url: '/slips',
+            url: '/slips/sale',
             method: 'get',
             params
         }).then(res => {
@@ -885,8 +884,22 @@
             goodsForm.value[key] = '';
         }
     }
+    function output(slipId){
+        baseAxios({
+            url: '/slipDetails/out/' + slipId,
+            method: 'put',
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.code){
+                ElMessage.success("货品出货成功！");
+            } else {
+                ElMessage.error(res.data.msg);
+            }
+        })
+    }
     // 点击付款
     const onChangeItem = () => {
+        let slipId;
         if(billData.value.custId === '' || billData.value.custId === null) ElMessage.error("客户不可为空");
         else {
             let method = 'post';
@@ -902,7 +915,6 @@
                 data: data
             }).then(res => {
                 console.log(res.data);
-                let slipId;
                 let t_data = [];
                 let url;
                 slipId = res.data.data;
@@ -935,6 +947,7 @@
                             message: '付款成功！',
                             type: 'success',
                         })
+                        output(slipId);
                         getBillList();
                     } else {
                         ElMessage.error(res.data.msg);

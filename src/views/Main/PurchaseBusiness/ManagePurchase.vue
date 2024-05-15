@@ -35,27 +35,27 @@
     <!-- 增加/编辑货品 -->
     <el-dialog v-model="addGoodsVis" width="500">
     <ContentHeader :content="dialogContent"></ContentHeader>
-    <el-form :model="goodsForm" style="margin-top: 15px;" ref="ruleFormRef" :rules="rules">
+    <el-form :model="form" style="margin-top: 15px;" ref="ruleFormRef" :rules="rules">
         <el-form-item label="货品名称" :label-width="formLabelWidth" prop="name">
-            <el-input v-model="goodsForm.name" placeholder="请输入货品名称" style="width: 280px;"/>
+            <el-input v-model="form.name" placeholder="请输入货品名称" style="width: 280px;"/>
         </el-form-item>
-        <!-- <el-form-item label="货品编号" :label-width="formLabelWidth" prop="goodsId">
-            <el-input v-model="form.id" placeholder="请输入货品编号" style="width: 280px;" />
-        </el-form-item> -->
         <el-form-item label="包装规格" :label-width="formLabelWidth" prop="decri">
-            <el-input v-model="goodsForm.decri" placeholder="请输入货品规格" style="width: 280px;" />
+            <el-input v-model="form.decri" placeholder="请输入货品规格" style="width: 280px;" />
         </el-form-item>
         <el-form-item label="进货价" :label-width="formLabelWidth" prop="jhPri">
-            <el-input v-model="goodsForm.jhPri" placeholder="请输入货品进货单价" style="width: 280px;" />
+            <el-input v-model="form.jhPri" placeholder="请输入货品进货单价" style="width: 280px;" />
         </el-form-item>
         <!-- <el-form-item label="批发价" :label-width="formLabelWidth" prop="pfPri">
-            <el-input v-model="goodsForm.pfPri" placeholder="请输入货品批发单价" style="width: 280px;"  />
+            <el-input v-model="form.pfPri" placeholder="请输入货品批发单价" style="width: 280px;"  />
         </el-form-item>
         <el-form-item label="零售价" :label-width="formLabelWidth" prop="lsPri">
-            <el-input v-model="goodsForm.lsPri" placeholder="请输入货品零售单价" style="width: 280px;" />
+            <el-input v-model="form.lsPri" placeholder="请输入货品零售单价" style="width: 280px;" />
         </el-form-item> -->
-        <el-form-item label="数量" :label-width="formLabelWidth" prop="storage">
-            <el-input v-model="goodsForm.storage" placeholder="请输入进货数目" style="width: 280px;" />
+        <el-form-item label="数量" :label-width="formLabelWidth" prop="number">
+            <el-input v-model="form.number" placeholder="请输入进货数目" style="width: 280px;" />
+        </el-form-item>
+        <el-form-item label="备注" :label-width="formLabelWidth" prop="notes">
+            <el-input v-model="form.notes" style="width: 280px;" />
         </el-form-item>
     </el-form>
     <template #footer>
@@ -136,7 +136,6 @@
             <el-table-column prop="cust" label="供应商" align="center"/>
             <el-table-column prop="phone" label="供应商电话" max-width="180" align="center"/>
             <el-table-column prop="address" label="收货地址" max-width="180" align="center"/>
-            <el-table-column prop="kindName" label="类型" max-width="180" align="center"/>
             <el-table-column prop="store" label="所属仓库" max-width="180" align="center"/>
             <el-table-column label="采购单状态" max-width="150" align="center">
                 <template #default="scope">
@@ -147,11 +146,18 @@
             <el-table-column label="操作" min-width="150" align="center">
                 <template #default="scope">
                     <el-button 
-                        v-if="scope.row.state === 3"
+                        v-if="scope.row.state === 1"
+                        size="small" 
+                        type="primary"
+                        @click="handleSumbit(scope.$index, scope.row)">
+                        提交
+                    </el-button>
+                    <el-button 
+                        v-if="scope.row.state === 1 || scope.row.state === 5"
                         size="small" 
                         type="warning"
                         @click="handleEdit(scope.$index, scope.row)">
-                        编辑
+                        {{ scope.row.state === 1? '编辑': '修改' }}
                     </el-button>
                     <el-button 
                         size="small" 
@@ -174,13 +180,6 @@
                         @click="handleDelete(scope.$index, scope.row)">
                         删除
                     </el-button>
-                    <el-button 
-                        size="small" 
-                        type="danger"
-                        v-if="scope.row.state === 4"
-                        @click="handleRefund(scope.$index, scope.row)">
-                        退货
-                    </el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -200,11 +199,10 @@
         <!-- 新建/编辑采购单内容 -->
         <el-dialog v-model="editGoodsDialogVisible" :title="dialogContent" width="1000px" :close-on-click-modal="false" >
             <el-table :data="billData.billDetail" style="width: 100%" max-height="500">
-                <el-table-column fixed prop="goodId" label="货品编号" width="100"  align="center" />
                 <el-table-column prop="name" label="货品名称" width="120"  align="center"/>
                 <el-table-column prop="decri" label="包装规格" width="120"  align="center"/>
                 <el-table-column prop="number" label="数量" width="120" align="center" />
-                <el-table-column prop="singlePrice" label="进货价" width="120" align="center" />
+                <el-table-column prop="jhPri" label="进货价" width="120" align="center" />
                 <el-table-column prop="total" label="金额" width="120" :formatter="totalFormatter" align="center" />
                 <el-table-column prop="notes" label="备注" width="120" align="center" />
                 <el-table-column fixed="right" label="操作" width="120" align="center">
@@ -270,31 +268,27 @@
         </el-dialog>
         <!-- 采购单预览 -->
         <el-dialog v-model="previewBillVis" title="采购单预览" width="1100px">
-            <div class="billPreview">
+            <div class="billPreview" id="printme">
                 <h2>采购单</h2>
                 <p>单号：{{ billData.id }}</p>
                 <table width="1000px" class="tableStyle">
                     <tr class="consigneeLine">
-                        <td :colspan="2">供应商名称:{{ billData.consigneeName }}</td>
+                        <td :colspan="1">供应商名称:{{ billData.consigneeName }}</td>
                         <td :colspan="2">联系方式:{{ billData.phone }}</td>
                         <td :colspan="2">供应商地址:{{ billData.address }}</td>
-                        <td :colspan="2">日期: {{ dayjs().format('YYYY-MM-DD') }}</td>
+                        <td :colspan="2">日期: {{ billData.createTime }}</td>
                     </tr>
                     <tr>
                         <th>序号</th>
-                        <th>货品编号</th>
                         <th>货品名称</th>
                         <th>包装规格</th>
                         <th>数量</th>
                         <th>进货价</th>
-                        <th>批发价</th>
-                        <th>零售价</th>
                         <th>金额</th>
                         <th>备注</th>
                     </tr>
                     <tr v-for="(item, index) in billData.billDetail">
                         <th>{{ index + 1 }}</th>
-                        <th>{{ item.goodId }}</th>
                         <th>{{ item.name }}</th>
                         <th>{{ item.decri }}</th>
                         <th>{{ item.number }}</th>
@@ -303,16 +297,21 @@
                         <th>{{ item.notes }}</th>
                     </tr>
                     <tr>
-                        <th :colspan="6" style="text-align: left;padding-left: 7px;">总金额（大写）：{{ charTotal }}</th>
+                        <th :colspan="5" style="text-align: left;padding-left: 7px;">总金额（大写）：{{ charTotal }}</th>
                         <th>{{ totalMoney }}</th>
                         <th></th>
                     </tr>
                     <tr style="text-align: left;">
-                        <th :colspan="5" style="padding-left: 7px;">审核人：</th>
-                        <th :colspan="3" style="padding-left: 7px;">审核日期：</th>
+                        <th :colspan="5" style="padding-left: 7px;">收银员：{{ checkPerson }}</th>
+                        <th :colspan="3" style="padding-left: 7px;">日期：{{ checkDate }}</th>
                     </tr>
                 </table>
             </div>
+            <template #footer>
+            <span class="dialog-footer">
+                <el-button type="primary" v-print="'#printMe'">打印</el-button>
+            </span>
+            </template>
         </el-dialog>
     </div>
 </template>
@@ -335,7 +334,7 @@
             { required: true, message: '请输入规格', trigger: 'blur' },
             { min: 1, max: 20, message: '规格应为1-20位', trigger: 'blur' },
         ],
-        storage: [
+        number: [
             { required: true, message: '请输入货品库存数量', trigger: 'blur' },
         ],
         jhPri: [
@@ -377,14 +376,29 @@
         // goodId: '',
         name: '',
         decri: '',
-        storage: '',
+        number: '',
         jhPri: '',
+        notes: '',
+    });
+    const form = ref({
+        name: '',
+        decri: '',
+        jhPri: '',
+        number: '',
         notes: '',
     });
     // 采购单信息
     // 查找信息
     // 常量部分
     const stateOptions = [
+        {
+            label: "未提交",
+            value: 1,
+        },
+        {
+            label: "待审核",
+            value: 2,
+        },
         {
             label: "未采购",
             value: 3,
@@ -394,13 +408,20 @@
             value: 4,
         },
         {
+            label: "未通过",
+            value: 5
+        },
+        {
             label: "已退货",
             value: 6
         }
     ];
     const stateMap = {
+        1: "未提交",
+        2: "待审核",
         3: "未采购",
         4: "已采购",
+        5: "未通过",
         6: "已退货"
     }
     const custMap = {};
@@ -514,11 +535,50 @@
         })
     }
     getStoreList();
+        // 对按钮的处理
+    async function handleSave(formEl){
+        if (!formEl) return
+        await formEl.validate((valid, fields) => {
+            if (valid) {
+                // console.log('submit!')
+                // let method = '';
+                // if(dialogContent.value == "新增货品"){
+                //     method = 'post';
+                //     form.value["state"] = 2;
+                // } else if(dialogContent.value == "编辑货品"){
+                //     method = 'put';
+                // }
+                // form.value["storeId"] = props.storeId;
+                // console.log(form.value);
+                // addNewGood(method, '保存成功！');
+                if(!form.value.number) ElMessage.error("数量不能为空");
+                else if(parseInt(form.value.number) === 0) ElMessage.error("数量不能为0");
+                else {
+                    form.value.number = parseInt(form.value.number)
+                    form.value.total = form.value.jhPri * form.value.number;
+                    let temp = Object.assign({}, form.value);
+                    if(goodsFlag.value === 0) billData.value.billDetail.push(temp);
+                    else {
+                        for(let key in form.value){
+                            billData.value.billDetail[goodsIndex][key] = form.value[key];
+                        }
+                    }
+                    addGoodsVis.value = false;
+                    for(let key in form.value){
+                        form.value[key] = '';
+                    }
+                }
+            } else {
+                console.log('error submit!', fields)
+            }
+        })
+        
+    }
     // 增加新增采购单按钮
     const onSubmit = () => {
         let flag = true;
         for(let i = 0; i < goodsForm.value.number.length; i++){
-            if(!(goodsForm.value.storage[i] >= '0' && goodsForm.value.storage[i] <= '9')){
+            if(!(goodsForm.value.number[i] >= '0' && goodsForm.value.number[i] <= '9')){
                 flag = false;
                 break;
             }
@@ -561,7 +621,6 @@
         let params = {
             page: currentPage.value,
             pageSize: pageSize.value,
-            kind: 3,
             state: formInline.state,
             storeId: formInline.storeId,
             custId: formInline.custId,
@@ -570,7 +629,7 @@
         }
         console.log(params);
         baseAxios({
-            url: '/slips',
+            url: '/slips/buy',
             method: 'get',
             params
         }).then(res => {
@@ -652,6 +711,17 @@
     }
     const handlePay = (index, row) => {
         changeState(row.id, 4, "付款成功！");
+        baseAxios({
+            url: '/billDetails/pass/' + row.id,
+            method: 'post'
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.code){
+                ElMessage.success("进货成功！")
+            } else {
+                ElMessage.error(res.data.msg);
+            }
+        })
     }
     const handleRefund = (index, row) => {
         ElMessageBox.confirm(
@@ -677,11 +747,10 @@
         })
     }
     // 处理采购单的编辑
-    let originIds = [];
     const handleEdit = (index, row, type=0) => {
         console.log(index, row)
         baseAxios({
-            url: "/slipDetails",
+            url: "/billDetails",
             method: 'get',
             params: {
                 slipId: row.id,
@@ -691,18 +760,17 @@
             console.log(res.data);
             billData.value = row;
             billData.value.billDetail = [];
-            originIds = [];
+            billData.value.consigneeName = custDetail[billData.value.custId].name;
             res.data.data.forEach(x => {
-                originIds.push(x.id);
                 let goodDetail = goodsDetail[x.goodId];
                 let temp = {
                     ...x,
                     ...goodDetail
                 }
                 temp.id = x.id;
-                if(row.kind === 1) temp.singlePrice = goodDetail.pfPri;
-                else if(row.kind === 2) temp.singlePrice = goodDetail.lsPri;
-                temp.total = Number(x.number) * Number(temp.singlePrice);
+                // if(row.kind === 1) temp.singlePrice = goodDetail.pfPri;
+                // else if(row.kind === 2) temp.singlePrice = goodDetail.lsPri;
+                temp.total = Number(x.number) * Number(temp.jhPri);
                 billData.value.billDetail.push(temp);
             });
             console.log("billData");
@@ -722,8 +790,8 @@
     // 处理采购单内采购单的编辑
     const editGoods = (index) => {
         // goodsForm.value = billData.billDetail.value[index];
-        for(let key in goodsForm.value){
-            goodsForm.value[key] = billData.value.billDetail[index][key];
+        for(let key in form.value){
+            form.value[key] = billData.value.billDetail[index][key];
         }
         addGoodsVis.value = true;
         goodsFlag.value = 1;
@@ -821,7 +889,7 @@
                 method = 'put';
             }
             let data = {
-                kind: billData.value.kind,
+                kind: 3,
                 state: 1,
                 storeId: billData.value.storeId,
                 custId: billData.value.custId,
@@ -838,32 +906,41 @@
                 let url;
                 if(method === 'post'){
                     slipId = res.data.data;
-                    url = '/slipDetails';
+                    url = '/billDetails';
                     billData.value.billDetail.forEach(x => {
                         t_data.push({
                             "slipId": slipId,
-                            "goodId": x.goodId,
+                            "name": x.name,
+                            "decri": x.decri,
+                            "jhPri": x.jhPri,
                             "number": x.number,
+                            "storeId": billData.value.storeId,
                             "notes": x.notes
                         })
                     });
                 } else if(method === 'put'){
                     slipId = billData.value.id;
-                    url = '/slipDetails/' + slipId;
+                    url = '/billDetails/' + slipId;
                     billData.value.billDetail.forEach(x => {
                         if(x.id){
                             t_data.push({
                                 "id": x.id,
                                 "slipId": slipId,
-                                "goodId": x.goodId,
+                                "name": x.name,
+                                "decri": x.decri,
+                                "jhPri": x.jhPri,
                                 "number": x.number,
+                                "storeId": billData.value.storeId,
                                 "notes": x.notes
-                            })
+                                })
                         } else {
                             t_data.push({
                                 "slipId": slipId,
-                                "goodId": x.goodId,
+                                "name": x.name,
+                                "decri": x.decri,
+                                "jhPri": x.jhPri,
                                 "number": x.number,
+                                "storeId": billData.value.storeId,
                                 "notes": x.notes
                             })
                         }
@@ -905,7 +982,17 @@
     const previewBillVis = ref(false);
     const totalMoney = ref(0);
     const charTotal = ref('');
+    const checkPerson = ref("");
+    const checkDate = ref('');
     const previewBill = () => {
+        if(billData.value.state > 2){
+            checkPerson.value = "岳不群"; 
+            checkDate.value = dayjs().format('YYYY-MM-DD');
+        } 
+        else{
+            checkPerson.value = "";
+            checkDate.value = "";
+        } 
         totalMoney.value = 0;
         billData.value.billDetail.forEach(x => totalMoney.value += x.total);
         totalMoney.value = totalMoney.value.toFixed(2);

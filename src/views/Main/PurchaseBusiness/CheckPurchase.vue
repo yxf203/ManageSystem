@@ -1,42 +1,10 @@
 <template>
     <div class="look-bill">
-        <ContentHeader content="审核销售单"></ContentHeader>
+        <ContentHeader content="查看采购单"></ContentHeader>
         <div class="query">
-            <!-- 查询表单 -->
-            <el-form :inline="true" :model="formInline" class="demo-form-inline">
-                <el-form-item label="收货人">
-                    <el-select
-                    v-model="formInline.custId"
-                    filterable
-                    clearable
-                    placeholder="请选择"
-                    style="width: 150px;"
-                    >
-                        <el-option
-                        v-for="item in custOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="类型">
-                    <el-select
-                    v-model="formInline.kind"
-                    filterable
-                    clearable
-                    placeholder="请选择"
-                    style="width: 150px;"
-                    >
-                        <el-option
-                        v-for="item in kindOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="所属仓库">
+           <!-- 查询表单 -->
+           <el-form :inline="true" :model="formInline" class="demo-form-inline">
+                <el-form-item label="对应仓库">
                     <el-select
                     v-model="formInline.storeId"
                     filterable
@@ -75,10 +43,9 @@
         >
             <!-- <el-table-column type="index" :index="indexMethod" width="80" label="序号" align="center"/> -->
             <el-table-column prop="id" label="订单编号" max-width="100" align="center"/>
-            <el-table-column prop="cust" label="收货人" align="center"/>
-            <el-table-column prop="phone" label="收货人电话" max-width="180" align="center"/>
-            <el-table-column prop="address" label="收货地址" max-width="180" align="center"/>
-            <el-table-column prop="kindName" label="类型" max-width="180" align="center"/>
+            <el-table-column prop="cust" label="供应商" align="center"/>
+            <el-table-column prop="phone" label="供应商电话" max-width="180" align="center"/>
+            <el-table-column prop="address" label="供应商地址" max-width="180" align="center"/>
             <el-table-column prop="store" label="所属仓库" max-width="180" align="center"/>
             <!-- <el-table-column label="订单状态" max-width="150" align="center">
                 <template #default="scope">
@@ -111,40 +78,38 @@
             >
             </el-pagination>
         </div>
-            <!-- 销售单预览 -->
-        <el-dialog v-model="previewBillVis" title="销售单预览" width="1100px">
+            <!-- 采购单预览 -->
+        <el-dialog v-model="previewBillVis" title="采购单预览" width="1100px">
             <div class="billPreview">
-                <h2>销售单</h2>
+                <h2>采购单</h2>
                 <p>单号：</p>
                 <table width="1000px" class="tableStyle">
                     <tr class="consigneeLine">
-                        <td :colspan="2">客户名称:{{ billData.consigneeName }}</td>
+                        <td :colspan="2">供应商名称:{{ billData.consigneeName }}</td>
                         <td :colspan="2">联系方式:{{ billData.phone }}</td>
-                        <td :colspan="2">客户地址:{{ billData.address }}</td>
+                        <td :colspan="2">供应商地址:{{ billData.address }}</td>
                         <td :colspan="2">日期: {{ billData.createTime.slice(0,10) }}</td>
                     </tr>
                     <tr>
                         <th>序号</th>
-                        <th>货品编号</th>
                         <th>货品名称</th>
                         <th>包装规格</th>
                         <th>数量</th>
-                        <th>单价</th>
+                        <th>进货价</th>
                         <th>金额</th>
                         <th>备注</th>
                     </tr>
                     <tr v-for="(item, index) in billData.billDetail">
                         <th>{{ index + 1 }}</th>
-                        <th>{{ item.goodId }}</th>
                         <th>{{ item.name }}</th>
                         <th>{{ item.decri }}</th>
                         <th>{{ item.number }}</th>
-                        <th>{{ item.singlePrice }}</th>
+                        <th>{{ item.jhPri }}</th>
                         <th>{{ item.total.toFixed(2) }}</th>
                         <th>{{ item.notes }}</th>
                     </tr>
                     <tr>
-                        <th :colspan="6" style="text-align: left;padding-left: 7px;">总金额（大写）：{{ charTotal }}</th>
+                        <th :colspan="5" style="text-align: left;padding-left: 7px;">总金额（大写）：{{ charTotal }}</th>
                         <th>{{ totalMoney }}</th>
                         <th></th>
                     </tr>
@@ -190,53 +155,6 @@
         createTime: [null, null],
     })
 
-
-    // 订单信息
-    // 查找信息
-    // 常量部分
-    // const stateOptions = [
-    //     {
-    //         label: "未提交",
-    //         value: 1,
-    //     },
-    //     {
-    //         label: "待审核",
-    //         value: 2,
-    //     },
-    //     {
-    //         label: "未付款",
-    //         value: 3,
-    //     },
-    //     {
-    //         label: "已付款",
-    //         value: 4,
-    //     },
-    //     {
-    //         label: "未通过",
-    //         value: 5
-    //     }
-    // ];
-    // const stateMap = {
-    //     1: "未提交",
-    //     2: "待审核",
-    //     3: "未付款",
-    //     4: "已付款",
-    //     5: "未通过",
-    // }
-    const kindOptions = [
-        {
-            label: "批发单",
-            value: 1,
-        },
-        {
-            label: "零售单",
-            value: 2,
-        },
-    ]
-    const kindMap = {
-        1: "批发单",
-        2: "零售单"
-    }
     const custMap = {};
     const custOptions = ref([]);
     const custDetail = {};
@@ -344,8 +262,7 @@
         })
     }
     getStoreList();
-    
-    // 获取所有订单信息
+    // 获取所有采购单信息
     const tableData = ref([]);
     function getBillList(){
         if(formInline.createTime == null){
@@ -354,7 +271,6 @@
         let params = {
             page: currentPage.value,
             pageSize: pageSize.value,
-            kind: formInline.kind,
             state: 2,
             storeId: formInline.storeId,
             custId: formInline.custId,
@@ -363,19 +279,17 @@
         }
         console.log(params);
         baseAxios({
-            url: '/slips/sale',
+            url: '/slips/buy',
             method: 'get',
             params
         }).then(res => {
             console.log(res.data);
             tableData.value = res.data.data.rows;
             tableData.value.forEach(x => {
-                // x.stateName = stateMap[x.state];
                 x.cust = custDetail[x.custId].name;
                 x.phone = custDetail[x.custId].phone;
                 x.address = custDetail[x.custId].address;
                 x.store = storeMap[x.storeId];
-                x.kindName = kindMap[x.kind];
             });
             total.value = res.data.data.total;
         }).catch(err => {
@@ -383,6 +297,7 @@
         })
     }
     getBillList();
+
     // 订单信息
     const billData = ref({
         id: null,
@@ -415,17 +330,18 @@
     }
     // 处理订单的编辑
     const currentId = ref(null);
+    // 处理采购单的编辑
     const handleEdit = (index, row) => {
         console.log(index, row)
         currentId.value = row.id;
         baseAxios({
-            url: "/slipDetails",
+            url: "/billDetails",
             method: 'get',
             params: {
                 slipId: row.id,
             }
         }).then(res => {
-            console.log("编辑订单");
+            console.log("编辑采购单");
             console.log(res.data);
             billData.value = row;
             billData.value.billDetail = [];
@@ -437,31 +353,30 @@
                     ...goodDetail
                 }
                 temp.id = x.id;
-                if(row.kind === 1) temp.singlePrice = goodDetail.pfPri;
-                else if(row.kind === 2) temp.singlePrice = goodDetail.lsPri;
-                temp.total = Number(x.number) * Number(temp.singlePrice);
+                // if(row.kind === 1) temp.singlePrice = goodDetail.pfPri;
+                // else if(row.kind === 2) temp.singlePrice = goodDetail.lsPri;
+                temp.total = Number(x.number) * Number(temp.jhPri);
                 billData.value.billDetail.push(temp);
-                previewBillVis.value = true;
             });
             console.log("billData");
             console.log(billData.value);
-            previewBill();
             getGoodsList();
-            dialogContent.value = "编辑订单";
-            editGoodsDialogVisible.value = true;
+            dialogContent.value = "编辑采购单";
+            previewBill();
+            // form.value = res.data.data;
         }).catch(err => {
             console.log(err.message);
         })
-
     }
-    // 审核销售单
+    
+    // 审核采购单
     function checkBill(flag){
         changeState(currentId.value, flag, "审核完成！");
         previewBillVis.value = false;
         getBillList();
     }
     
-    // 生成销售单预览
+    // 生成采购单预览
     const previewBillVis = ref(false);
     const totalMoney = ref(0);
     const charTotal = ref('');
@@ -547,7 +462,7 @@
 .demo-form-inline .el-select {
     --el-select-width: 100px;
 }
-// 销售单样式
+// 采购单样式
 .billPreview {
     display: flex;
     flex-direction: column;

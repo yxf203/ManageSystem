@@ -16,6 +16,7 @@ import LookBill from '@/views/Main/SaleBusiness/LookBill.vue';
 import POS from '@/views/Main/SaleBusiness/POS.vue';
 // 采购业务
 import ManagePurchase from '@/views/Main/PurchaseBusiness/ManagePurchase.vue';
+import CheckPurchase from '@/views/Main/PurchaseBusiness/CheckPurchase.vue';
 // 库存管理
 import Repertory from '@/views/Main/ManageStore/Repertory.vue';
 import RepertoryGraph from '@/views/Main/ManageStore/RepertoryGraph.vue';
@@ -84,6 +85,11 @@ const routes = [
                 path: 'managePurchase',
                 name: 'managePurchase',
                 component: ManagePurchase
+            },
+            {
+                path: 'checkPurchase',
+                name: 'checkPurchase',
+                component: CheckPurchase
             },
             // 库存管理
             {

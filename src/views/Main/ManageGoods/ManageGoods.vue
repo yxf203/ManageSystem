@@ -551,6 +551,12 @@ const handleDelete = (index, row) => {
 const handleState = (index, row) => {
     let tip = row.state === 1? '下架': '上架';
     let state = row.state === 1? 2 : 1;
+    if(row.state === 2){
+        if(row.pfPri === 0 || row.lsPri === 0){
+            ElMessage.error("批发价和零售价皆为空时无法上架！");
+            return;
+        }
+    }
     console.log(state);
     ElMessageBox.confirm(
         '确认' + tip + '该货品吗？',

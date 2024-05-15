@@ -368,7 +368,7 @@
                         <td :colspan="2">客户名称:{{ billData.consigneeName }}</td>
                         <td :colspan="2">联系方式:{{ billData.phone }}</td>
                         <td :colspan="2">客户地址:{{ billData.address }}</td>
-                        <td :colspan="2">日期: {{ dayjs().format('YYYY-MM-DD') }}</td>
+                        <td :colspan="2">日期: {{ billData.createTime }}</td>
                     </tr>
                     <tr>
                         <th>序号</th>
@@ -396,8 +396,8 @@
                         <th></th>
                     </tr>
                     <tr style="text-align: left;">
-                        <th :colspan="5" style="padding-left: 7px;">审核人：</th>
-                        <th :colspan="3" style="padding-left: 7px;">审核日期：</th>
+                        <th :colspan="5" style="padding-left: 7px;">审核人：{{ checkPerson }}</th>
+                        <th :colspan="3" style="padding-left: 7px;">审核日期：{{ checkDate }}</th>
                     </tr>
                 </table>
             </div>
@@ -709,7 +709,7 @@
         }
         console.log(params);
         baseAxios({
-            url: '/slips',
+            url: '/slips/sale',
             method: 'get',
             params
         }).then(res => {
@@ -792,6 +792,17 @@
     }
     const handlePay = (index, row) => {
         changeState(row.id, 4, "付款成功！");
+        baseAxios({
+            url: '/slipDetails/out/' + row.id,
+            method: 'put',
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.code){
+                ElMessage.success("货品出货成功！");
+            } else {
+                ElMessage.error(res.data.msg);
+            }
+        })
     }
     const handleRefund = (index, row) => {
         ElMessageBox.confirm(
@@ -1046,7 +1057,17 @@
     const totalMoney = ref(0);
     const charTotal = ref('');
     const profit = ref(0);
+    const checkPerson = ref("");
+    const checkDate = ref('');
     const previewBill = () => {
+        if(billData.value.state > 2){
+            checkPerson.value = "客服小祥"; 
+            checkDate.value = dayjs().format('YYYY-MM-DD');
+        } 
+        else{
+            checkPerson.value = "";
+            checkDate.value = "";
+        } 
         totalMoney.value = 0;
         profit.value = 0;
         billData.value.billDetail.forEach(x => {

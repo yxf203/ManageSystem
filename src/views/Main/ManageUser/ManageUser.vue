@@ -209,12 +209,12 @@ const ruleFormRef = ref()
 const rules = reactive({
     username: [
         { required: true, message: '请输入用户名', trigger: 'blur' },
-        { min: 2, max: 20, message: '用户名长度应为2-20', trigger: 'blur' },
+        { min: 2, max: 10, message: '用户名长度应为2-10', trigger: 'blur' },
         { validator: validateUsername, trigger: 'blur' }
     ],
     name: [
         { required: true, message: '请输入姓名', trigger: 'blur' },
-        { min: 2, max: 20, message: '姓名长度应为2-10', trigger: 'blur' },
+        { min: 2, max: 10, message: '姓名长度应为2-10', trigger: 'blur' },
         { validator: validateName, trigger: 'blur' }
     ],
     gender: [
